@@ -1,0 +1,108 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+	<head>
+
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+		<meta name="title" content="" />
+		<meta name="robots" content="index, follow" />
+		<meta name="description" content="" />
+		<meta name="keywords" content="" />
+		<meta name="language" content="en" />
+
+		<title>Comparison of image data format </title>
+
+        <style type="text/css">
+            body {
+                margin-top: 50px;
+                text-align: center;
+            }
+        </style>
+
+	</head>
+	<body>
+        <script type='text/javascript'>
+            onload = function () {
+                var width = 1000;
+                var height = 1000;
+                if ( location.href.match(/\?canvas/) )
+                    test_canvas_data(width, height);
+                else if ( location.href.match(/\?compact/) )
+                    test_compact_data(width, height);
+            };
+        
+            // image data array from canvas spec
+            //
+            function test_canvas_data (width, height) 
+            {
+                var data = new Array(width * height * 4);
+                var start = new Date;
+
+                var red, blue, green, alpha
+
+                for (var offs = 0; offs<data.length; offs+=4) {
+                    data[offs] = 1;
+                    data[offs + 1] = 1;
+                    data[offs + 2] = 1;
+                    data[offs + 3] = 1;
+                }
+
+                for (var offs = 0; offs<data.length; offs+=4) {
+                    red = data[offs];
+                    blue = data[offs + 1];
+                    green = data[offs + 2];
+                    alpha = data[offs + 3];
+                }
+
+                alert(["Data length", "read/write time"].join(" , ") + "\n" + 
+                      [ data.length, 
+                        ((new Date) - start)].join(" , ") )
+            };
+
+            // compact image data, used in fxcanvas
+            //
+            function test_compact_data (width, height) 
+            {
+                var data = new Array(width * height);
+                var start = new Date;
+                
+                var pixelRgba, red, blue, green, alpha;
+
+                for (var offs = 0; offs<data.length; offs++) {
+                    data[offs] = (1 << 24) + (1 << 16) + (1 << 8) + 1;
+                }
+
+                for (var offs = 0; offs<data.length; offs++) {
+                    pixelRgba = data[offs]
+                    red = pixelRgba >> 24 & 0xFF,
+                    green = pixelRgba >> 16 & 0xFF,
+                    blue = pixelRgba >> 8 & 0xFF,
+                    alpha = pixelRgba & 0xFF;
+                }
+
+                alert(["Data length", "read/write time"].join(" , ") + "\n" + 
+                      [ data.length, 
+                        ((new Date) - start)].join(" , ") )
+            };
+
+        </script>
+        <h2>Comparison of image data structures</h2>
+        <button onclick="location.replace(location.href.replace(/\?[a-z]+/, '') + '?canvas')">make canvas data</button>
+        <button onclick="location.replace(location.href.replace(/\?[a-z]+/, '') + '?compact')">make compact data</button>
+        <p>Image size is 1000x1000 pixels.</p>
+        <p>This test will create arrays with different image data structures. First as is declared in Canvas spec (array element is an color channel), second is slightly different: element is pixel encoded in 32-bit integer. </p>
+        <p>In IE are using quiet inefficient memory manager so we can face a problems if trying to using default image data. So as compromise I change data format. With a compact format, memory consumption makes half or third of a standard, as a result loops takes less time. For technical details see page source.</p>
+        <p>For running test, open task manager and push one of buttons above.</p>
+        <p>
+            Here is my results (WinXP, Internet Explorer 8):<br/>
+            <li>default data: 4687 ms</li>
+            <div><img src="res-taskman-default.png" /></div>
+            <p></p>
+            <li>compact data: 2513 ms</li>
+            <p></p>
+            <div><img src="res-taskman-compact.png" /></div>
+            <p></p>
+            <p>On average, algorithms that use compact data must be faster in about 2-3 times versus standard image array.</p>
+            <p>In conclusion I must say that I realize that main idea of Canvas image data array was simplicity, but in this case it seems simplicity is evil, not good.</p>
+        </p>
+	</body>
+</html>

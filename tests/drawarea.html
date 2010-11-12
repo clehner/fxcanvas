@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>drawarea</title>
+    <script type="text/javascript" src="../jooscript.js"></script><script type="text/javascript" src="../fxcanvas.js"></script><!--[if IE]><script type="text/javascript" src="../flash_backend.js"></script><![endif]--><comment><script type="text/javascript" src="../canvas_backend.js"></script></comment>
+    <!--<script type="text/javascript" src="../libs/jooscript-basics.git/debug.php"></script>-->
+    <!--<script type="text/javascript" src="../debug.php"></script>-->
+  <style>
+    body {
+      background-color:black;
+      margin:50px;
+      text-align:center;
+      color: #fff;
+    }
+    canvas {
+      border:1px solid #444;
+    }
+    button {
+      margin: 3px;
+    }
+    input {
+      width: 2em;
+    }
+    .pressed {
+        color: #6600cc;
+        background-color: #b2ff00;
+    }
+    button,
+    .released {
+        color: #000;
+        background-color: #e5e5e5;
+    }
+    body {
+      /* Gecko-based, Mozilla */
+      -moz-user-select:none;
+      /* Safari */
+      -khtml-user-select: none;
+    }
+  </style>
+    <script type="text/javascript" src="../src/drawarea.js"> </script> 
+    <script type="text/javascript">
+      function transform_() {
+        var da = document.getElementById("drawarea");
+        var tx = parseFloat(document.getElementById("translate_x").value) || 0;
+        var ty = parseFloat(document.getElementById("translate_y").value) || 0;
+        var rot = parseFloat(document.getElementById("rotate").value) || 0;
+        var scale = parseFloat(document.getElementById("scale").value) || 1;
+        da.translate(tx, ty)
+        da.rotate(rot)
+        da.scale(scale)
+        da.draw()
+      };
+      function clear_transform_() {
+        document.getElementById("translate_x").value = 0;
+        document.getElementById("translate_y").value = 0;
+        document.getElementById("rotate").value = 0;
+        document.getElementById("scale").value = 1;
+      }
+    </script>
+</head>
+<body>
+  <div>
+    <button id="clear" onclick="clear_transform_();">clear</button>
+    <button id="moveTo_1">moveTo</button>
+    <button id="lineTo_1">lineTo</button>
+    <button id="quadraticCurveTo_2">quad...To</button>
+    <button id="bezierCurveTo_3">bezier...To</button>
+    <button id="arcTo_2">arcTo</button>
+    <button id="arc_2">arc</button>
+    <button id="rect_2">rect</button>
+    translate: <input type="text" id="translate_x" value="0" onkeyup="transform_();"/>, <input type="text" id="translate_y" value="0" onkeyup="transform_();"/>
+    rotate: <input type="text" id="rotate" value="0" onkeyup="transform_();"/>
+    scale: <input type="text" id="scale" value="1" onkeyup="transform_();"/>
+  </div>
+  <canvas id="drawarea" width="800" height="600" frameDuration="10" tracePathBounds="true"></canvas>
+  <div>Shift-click to test if point in path or in bounding box</div>
+</body>
+</html>
+

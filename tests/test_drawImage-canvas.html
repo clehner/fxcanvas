@@ -1,0 +1,70 @@
+<!DOCTYPE HTML> 
+
+<html>
+  <head>
+    <script type="text/javascript" src="../jooscript.js"></script><script type="text/javascript" src="../fxcanvas.js"></script><!--[if IE]><script type="text/javascript" src="../flash_backend.js"></script><![endif]--><comment><script type="text/javascript" src="../canvas_backend.js"></script></comment>
+    <!--<script type="text/javascript" src="../debug.php"></script>-->
+    <style type="text/css">
+      canvas {
+        border: 1px solid gray;
+        margin: 10px;
+      }
+    </style>
+    <script type="text/javascript">
+      // note: in windows test will show different pictures,
+      // while it's basic implementation in fxcanvas
+      var colors = ["#9dff00", "#009dff", "#ff009d"]
+      window.onload = function() {
+        for(var i=0; i<3; i++){
+          var cv = document.getElementById("cv" + i)
+          var ctx = cv.getContext("2d")
+          ctx.globalAlpha = 1
+          ctx.fillStyle = colors[i]
+          ctx.fillRect(0,0,ctx.canvas.width,ctx.canvas.height)
+        }
+        var cv0 = document.getElementById("cv0")
+        var ctx0 = cv0.getContext("2d")
+        var cv1 = document.getElementById("cv1")
+        var ctx1 = cv1.getContext("2d")
+        var cv2 = document.getElementById("cv2")
+        var ctx2 = cv2.getContext("2d")
+        var cv3 = document.getElementById("cv3")
+        var ctx3 = cv3.getContext("2d")
+
+        var globAlpha = .7
+
+        var offs = 0
+        cv3.onload = function(cv) {
+          ctx3.drawImage(cv, offs, offs, 50, 50)
+          offs += 50
+        }
+        cv3.loadImage(cv0, cv1, cv2)
+
+        function drawRect(rect) {
+          this.getContext("2d").drawImage(rect, 50, 50, 100, 100)
+        }
+
+        ctx0.globalAlpha = globAlpha
+        ctx0.globalCompositeOperation = "lighter"
+        cv0.onload = drawRect
+        cv0.loadImage(cv2)
+
+        ctx1.globalAlpha = globAlpha
+        ctx1.globalCompositeOperation = "lighter"
+        cv1.onload = drawRect
+        cv1.loadImage(cv0)
+
+        ctx2.globalAlpha = globAlpha
+        ctx2.globalCompositeOperation = "lighter"
+        cv2.onload = drawRect
+        cv2.loadImage(cv3)
+      }
+    </script>
+  </head>
+  <body>
+    <canvas id="cv0" width="200" height="200"></canvas>
+    <canvas id="cv1" width="200" height="200"></canvas>
+    <canvas id="cv2" width="200" height="200"></canvas>
+    <canvas id="cv3" width="200" height="200"></canvas>
+  </body>
+</html>

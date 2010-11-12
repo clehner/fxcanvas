@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<!-- from http://philip.html5.org/demos/canvas/arcto-inf.html-->
+<script type="text/javascript" src="../jooscript.js"></script><script type="text/javascript" src="../fxcanvas.js"></script><!--[if IE]><script type="text/javascript" src="../flash_backend.js"></script><![endif]--><comment><script type="text/javascript" src="../canvas_backend.js"></script></comment>
+
+Each table row has an arcTo between the three red points (starting from the top left point),
+and then a lineTo to the green point.
+y<sub>2</sub> is the relative vertical position of the third red dot from the horizontal line
+of the first two.
+
+<table border="1"><tr><th>y<sub>2</sub><th>Your browser's rendering</table>
+
+<script>
+function disc(ctx, x, y, r, col) {
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+    ctx.arc(x, y, r, 0, 2*Math.PI, false);
+    ctx.fillStyle = col;
+    ctx.fill();
+}
+function line(ctx, x0, y0, x1, y1, w, col) {
+    ctx.beginPath();
+    ctx.moveTo(x0, y0);
+    ctx.lineTo(x1, y1);
+    ctx.lineWidth = w;
+    ctx.strokeStyle = col;
+    ctx.stroke();
+}
+
+window.onload = function () {
+    var t = document.getElementsByTagName('tbody')[0];
+    var r = 10;
+    var x0 = 400, x1 = 450, x2 = 350, x3 = 400;
+    var y = 10;
+    var y3 = 80;
+    var y2s = [80, 50, 40, 30, 10, 5, 0.1, 0];
+    for (var i = 0; i < y2s.length; ++i) {
+        var y2 = y2s[i];
+        var c = document.createElement('canvas');
+        c.width = 500;
+        c.height = 100;
+        var tr = t.appendChild(document.createElement('tr'));
+        tr.appendChild(document.createElement('td')).appendChild(document.createTextNode(y2));
+        tr.appendChild(document.createElement('td')).appendChild(c);
+        var ctx = c.getContext('2d');
+
+        disc(ctx, x0, y, 4, 'red');
+        disc(ctx, x1, y, 4, 'red');
+        disc(ctx, x2, y+y2, 4, 'red');
+        disc(ctx, x3, y3, 4, 'green');
+        line(ctx, x0, y, x1, y, 1, 'blue');
+        line(ctx, x1, y, x2, y+y2, 1, 'blue');
+
+        ctx.lineWidth = 2;
+        ctx.strokeStyle = 'black';
+        ctx.beginPath();
+        ctx.moveTo(x0, y);
+        ctx.arcTo(x1, y, x2, y+y2, r);
+        //alert([x1, y, x2, y+y2, r])
+        ctx.lineTo(x3, y3);
+        ctx.stroke();
+    }
+};
+</script>

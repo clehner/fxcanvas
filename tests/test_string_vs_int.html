@@ -1,0 +1,47 @@
+
+<script type="text/javascript">
+    var sum_r1 = [], sum_r2 = [], count = 0;
+
+    function test() {
+        var r1, r2, d = new Date, t = 0, iter = 700000;
+
+        var pixel_str = "\x00\x10\x20\x30",
+            pixel_int = 0x00102030;
+
+        var red, green, blue, alpha;
+
+        for (var i = 0; i<iter ; i++) {
+            red = pixel_int >> 24 & 0xFF,
+            green = pixel_int >> 16 & 0xFF,
+            blue = pixel_int >> 8 & 0xFF,
+            alpha = pixel_int & 0xFF;
+        }
+
+        r1 = new Date - d
+        d = new Date
+
+        for (var i = 0; i<iter; i++) {
+            red = pixel_str.charCodeAt(0),
+            green = pixel_str.charCodeAt(1),
+            blue = pixel_str.charCodeAt(2),
+            alpha = pixel_str.charCodeAt(3);
+        }
+
+        r2 = new Date - d
+
+        sum_r1[count] = r1
+        sum_r2[count] = r2
+
+        var x1 = 0, x2 = 0
+        for (var i=0; i<count; i++) {
+            x1 += sum_r1[i]  
+            x2 += sum_r2[i]  
+        }
+
+        console.log([Math.round(x1 / count), Math.round(x2 / count)])
+
+        count += 1
+    }
+
+    setInterval(test, 1000)
+</script>

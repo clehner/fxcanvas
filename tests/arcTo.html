@@ -1,0 +1,68 @@
+<!DOCTYPE HTML> 
+<!-- from http://canvex.lazyilluminati.com/misc/arcto.html -->
+<script type="text/javascript" src="../jooscript.js"></script><script type="text/javascript" src="../fxcanvas.js"></script><!--[if IE]><script type="text/javascript" src="../flash_backend.js"></script><![endif]--><comment><script type="text/javascript" src="../canvas_backend.js"></script></comment>
+.
+<canvas id=c width=512 height=512></canvas> 
+<script> 
+window.onload = function ()
+{
+	var ctx = document.getElementById('c').getContext('2d');
+	ctx.translate(50, 0);
+	
+	ctx.translate(0, 50);
+	ctx.beginPath();
+	ctx.moveTo(0, 0);
+	ctx.arcTo(100, 0, 100, 100, 25);
+	ctx.lineTo(0, 25);
+	ctx.stroke();
+ 
+	ctx.translate(0, 50);
+	ctx.beginPath();
+	ctx.moveTo(0, 0);
+	ctx.arcTo(-100, 0, 0, 35, 25);
+	ctx.lineTo(0, 35);
+	ctx.stroke();
+ 
+	ctx.translate(0, 120);
+	ctx.beginPath();
+	ctx.moveTo(0, 0);
+	ctx.arcTo(50, 0, 100, 0, 25);
+	ctx.lineTo(0, 45);
+	ctx.stroke();
+ 
+	ctx.translate(0, 75);
+	ctx.beginPath();
+	ctx.moveTo(0, 0);
+	ctx.arcTo(100, 0, 50, 0, 25);
+	ctx.lineTo(0, 15);
+	ctx.stroke();
+ 
+	ctx.translate(0, 30);
+	ctx.beginPath();
+	ctx.moveTo(0, 0);
+	ctx.arcTo(0, 0, 50, 0, 25);
+	ctx.lineTo(0, 15);
+	ctx.stroke();
+ 
+	ctx.translate(0, 30);
+	ctx.beginPath();
+	ctx.moveTo(0, 0);
+	ctx.arcTo(50, 0, 50, 0, 25);
+	ctx.lineTo(0, 15);
+	ctx.stroke();
+ 
+	ctx.translate(0, 30);
+	ctx.beginPath();
+	ctx.moveTo(0, 0);
+	ctx.arcTo(0, 0, 0, 0, 25);
+	ctx.lineTo(0, 15);
+	ctx.stroke();
+ 
+	ctx.translate(0, 30);
+	ctx.beginPath();
+	ctx.moveTo(0, 0);
+	ctx.arcTo(50, 0, 50, 50, 0);
+	ctx.lineTo(0, 15);
+	ctx.stroke();
+}
+</script> 

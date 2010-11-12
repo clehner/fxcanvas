@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Pattern Test</title>
+<style>
+
+body {
+  text-align: center
+}
+
+</style>
+    <script type="text/javascript" src="../../../jooscript.js"></script><script type="text/javascript" src="../../../fxcanvas.js"></script><!--[if IE]><script type="text/javascript" src="../../../flash_backend.js"></script><![endif]--><comment><script type="text/javascript" src="../../../canvas_backend.js"></script></comment>
+<script>
+
+var img, ctx;
+function draw() {
+  var p = ctx.createPattern(img, 'repeat');
+  ctx.translate(50, 50);
+  ctx.fillStyle = p;
+  ctx.fillRect(0, 0, 300, 300);
+}
+
+window.onload = function() {
+  ctx = document.getElementById('c').getContext('2d');
+  ctx.canvas.onload = function(img_) {
+    img = img_
+    draw();
+  };
+  ctx.canvas.loadImage('pattern.jpg');
+
+  /*
+  img = new Image;
+  img.onload = function() {
+    draw();
+  };
+  img.src = 'pattern.jpg';
+  */
+};
+
+</script>
+</head>
+<body>
+
+<canvas id=c width=400 height=400></canvas>
+
+<p>This tests patterns</p>
+
+</body>
+</html>

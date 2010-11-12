@@ -1,0 +1,38 @@
+<html> 
+	<head> 
+		<title>CanvasRoundedCornerExample</title> 
+		<style type="text/css"> 
+			
+			#c {
+				border:1px solid lime;
+			}
+			
+		</style> 
+    <script type="text/javascript" src="../jooscript.js"></script><script type="text/javascript" src="../fxcanvas.js"></script><!--[if IE]><script type="text/javascript" src="../flash_backend.js"></script><![endif]--><comment><script type="text/javascript" src="../canvas_backend.js"></script></comment>
+		<script type="text/javascript"> 
+		
+			function load() {
+				var canvas = document.getElementById("c");
+				var ctx = canvas.getContext("2d");
+				
+				var side = 200;
+				var cornerRadius = 20;
+				
+				ctx.translate(100, 100);
+				ctx.beginPath();
+				ctx.moveTo(cornerRadius, 0);
+				ctx.arcTo(side, 0, side, side, cornerRadius);
+				ctx.arcTo(side, side, 0, side, cornerRadius);
+				ctx.arcTo(0, side, 0, 0, cornerRadius);
+				ctx.arcTo(0, 0, side, 0, cornerRadius);
+ 
+				ctx.stroke();
+			}
+		
+			
+		</script> 
+	</head> 
+	<body onload="load();"> 
+		<canvas id="c" width="500" height="500"></canvas> 
+	</body> 
+</html>

@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>loadImage() test</title>
+    <script type="text/javascript" src="../jooscript.js"></script><script type="text/javascript" src="../fxcanvas.js"></script><!--[if IE]><script type="text/javascript" src="../flash_backend.js"></script><![endif]--><comment><script type="text/javascript" src="../canvas_backend.js"></script></comment>
+    <script type="text/javascript">
+      onload = function () {
+        var canvas = document.getElementById("cv");
+        var ctx = canvas.getContext("2d");
+        canvas.frameDuration = 10;
+
+        var bg_src = "night-in-village.jpg";
+        canvas.onload = function(img) {
+          var a = 1;
+
+          if (img.src.indexOf(bg_src) > -1) {
+            canvas.onframe = function () {
+              if (a < .1) canvas.onframe=null;
+              ctx.fillStyle = "rgba(0,0,0,"+a+")";
+              ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+              ctx.fillRect(0, 0, canvas.width, canvas.height);
+              if (a > .1) a -= 1 / 10;
+              else a = 0
+            };
+          }
+        }
+        canvas.loadImage(bg_src);
+      };
+  </script>
+  <style>
+    body {
+      background-color:black;
+      margin:50px;
+      text-align:center;
+    }
+    canvas {
+      border:1px solid #444;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="cv" width="640" height="480"></canvas>
+</body>
+</html>
+

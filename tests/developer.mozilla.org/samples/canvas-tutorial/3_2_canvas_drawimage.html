@@ -1,0 +1,52 @@
+<html>
+  <head>
+    <title>Canvas drawImage example 2</title>
+    <meta name="DC.creator" content="Kamiel Martinet, http://www.martinet.nl/">
+    <meta name="DC.publisher" content="Mozilla Developer Center, http://developer.mozilla.org">
+    <script type="text/javascript" src="../../../../jooscript.js"></script><script type="text/javascript" src="../../../../fxcanvas.js"></script><!--[if IE]><script type="text/javascript" src="../../../../flash_backend.js"></script><![endif]--><comment><script type="text/javascript" src="../../../../canvas_backend.js"></script></comment>
+    <script id="sourceScript" type="text/javascript">
+function draw() {
+  var ctx = document.getElementById('canvas').getContext('2d');
+
+  ctx.canvas.onload = function(img){
+    for (i=0;i<4;i++){
+      for (j=0;j<3;j++){
+        ctx.drawImage(img,j*50,i*38,50,38);
+      }
+    }
+
+    // prevent IE6 memory leak
+    img = null;
+  }
+  ctx.canvas.loadImage('images/rhino.jpg')
+}
+    </script>
+    <style type="text/css">
+      body { margin: 20px; font-family: arial,verdana,helvetica; background: #fff;}
+      h1 { font-size: 140%; font-weight:normal; color: #036; border-bottom: 1px solid #ccc; }
+      h2 { font-size: 100%; color: #036; }
+      canvas { border: 2px solid #000; float: left; margin-right: 20px; margin-bottom: 20px; }
+      pre { float:left; display:block; background: rgb(238,238,238); border: 1px dashed #666; padding: 15px 20px; margin: 0 0 10px 0; }
+    </style>
+  </head>
+  <body onload="draw();">
+    <h1>Canvas drawImage example 2</h1>
+    <div>
+      <canvas id="canvas" width="150" height="150"></canvas>
+            <pre id="sourceText">
+            </pre>
+  <script type="text/javascript">
+    var script = document.getElementById("sourceScript")
+    if(script.textContent) {
+      document.getElementById("sourceText").textContent = script.textContent;
+    } else {
+      document.getElementById("sourceText").innerText = script.innerHTML;
+    }
+  </script>
+      <div style="float:left;">
+        <h2>Source image</h2>
+        <img src="images/rhino.jpg"/>
+      </div>
+    </div>
+  </body>
+</html>

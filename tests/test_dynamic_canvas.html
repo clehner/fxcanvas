@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>test dynamically created canvas</title>
+    
+    <script type="text/javascript" src="../jooscript.js"></script><script type="text/javascript" src="../fxcanvas.js"></script><!--[if IE]><script type="text/javascript" src="../flash_backend.js"></script><![endif]--><comment><script type="text/javascript" src="../canvas_backend.js"></script></comment>
+    <script type="text/javascript">
+      $Import(this, "buz.fxcanvas")
+      // disable automatic extends
+      this.fxcanvas.config.enable = false
+
+      onload = function () {
+        var screenWidth = document.documentElement.clientWidth
+        var screenHeight = document.documentElement.clientHeight
+        var canvasWidth = screenWidth*.4
+        var canvasHeight = screenHeight*.4
+        var canvas = document.createElement("canvas")
+        canvas.setAttribute("width", canvasWidth)
+        canvas.setAttribute("height", canvasHeight)
+        canvas.style.top = ((canvasWidth/2)) + "px"
+        canvas.style.left = ((canvasHeight/2)) + "px"
+        document.body.appendChild(canvas)
+        // manually extend context of canvas element
+        this.fxcanvas.initElement(canvas)
+
+        var ctx = canvas.getContext("2d")
+        function draw() {
+          if (canvas.width == Math.round(screenWidth*.2)) {
+            canvas.width = Math.round(screenWidth*.4)
+            canvas.height = Math.round(screenHeight*.4)
+          } else {
+            canvas.width = Math.round(screenWidth*.2)
+            canvas.height = Math.round(screenHeight*.2)
+          }
+          ctx.clearRect(0,0,canvas.width,canvas.height)
+              .setFillStyle("#fff")
+              .fillRect(0,0,canvas.width,canvas.height)
+              .setFillStyle("#000")
+        }
+        var intId = setInterval(draw, 700);
+        draw()
+      };
+  </script>
+  <style>
+    body {
+      color:#fff;
+      background-color:black;
+      margin:50px;
+      text-align:center;
+    }
+    canvas {
+      top:0px;
+      left:0px;
+      position:absolute;
+      border:4px solid #66ff00;
+      background-color:#ff0066;
+    }
+  </style>
+</head>
+<body>
+You should see uniformly filling dynamically resizing white rectangle with green borders
+</body>
+</html>
+

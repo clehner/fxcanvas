@@ -1,0 +1,45 @@
+<html>
+<head>
+    <title>arc drawing</title>
+    <script type="text/javascript" src="../jooscript.js"></script><script type="text/javascript" src="../fxcanvas.js"></script><!--[if IE]><script type="text/javascript" src="../flash_backend.js"></script><![endif]--><comment><script type="text/javascript" src="../canvas_backend.js"></script></comment>
+    <script type="text/javascript">
+        function rand (min, max)
+        {
+          var randomNum = Math.floor(Math.random() * (max - min + 1)) + min;
+          return randomNum;
+        }
+
+        function load() {
+            canvas = document.getElementById("cv");
+            ctx = canvas.getContext("2d");
+
+            ctx.lineWidth = "1";
+            ctx.strokeStyle = "rgb(0, 0, 0)";
+
+            for(var i = 0; i < 50; i++) {
+              ctx.save();
+              ctx.beginPath();
+              ctx.strokeStyle = "rgb("+ rand(2, 255) +", "+ rand(2, 255) +", "+ rand(2, 255) +")";
+              //ctx.arc(i+(i*9), i+(i*9), i*2, 0, 360, false);
+              ctx.translate(i+(i*9), i+(i*9))
+              ctx.arc(0, 0, i*2, 0, 360, false);
+              ctx.stroke();
+              ctx.restore();
+            }
+        }
+    </script>
+    <style>
+        body {
+            margin:50px;
+            text-align:center;
+        }
+
+        canvas {
+            border:1px solid #444;
+        }
+    </style>
+</head>
+<body onload="load();">
+    <canvas id="cv" width="600" height="600"></canvas>
+</body>
+</html>

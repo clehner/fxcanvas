@@ -1,0 +1,172 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+	<head>
+
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+		<meta name="title" content="" />
+		<meta name="robots" content="index, follow" />
+		<meta name="description" content="" />
+		<meta name="keywords" content="" />
+		<meta name="language" content="en" />
+
+		<title>W3C events test</title>
+        <style>
+            body {
+                margin:50px;
+                text-align:center;
+            }
+            #cv-cont, canvas {
+              border:2px solid #444;
+              background-color: #eee;
+            }
+            .test {
+                width:400px; 
+                height:200px; 
+                border: 1px solid #000; 
+                text-align: center;
+                display: inline;
+            }
+        </style>
+    <script type="text/javascript" src="../jooscript.js"></script><script type="text/javascript" src="../fxcanvas.js"></script><!--[if IE]><script type="text/javascript" src="../flash_backend.js"></script><![endif]--><comment><script type="text/javascript" src="../canvas_backend.js"></script></comment>
+
+	</head>
+	<body>
+        <div id="cv-cont">
+            <canvas id="cv" width="400" height="300"></canvas>
+        </div>
+        <textarea id="test-area" class="test">
+            test
+        </textarea>
+
+    <script>
+        function drawCircle( ctx, radius, x, y )
+        {
+            ctx.beginPath();
+            ctx.arc( x, y, radius, 0, 360, false );
+            var inpath;
+        }
+
+        function getRelativeCoords (element, event) {
+          var xy = {x:0, y:0}
+          var osl = 0
+          var ost = 0
+          var el = element
+          while (el) {
+            osl += el.offsetLeft
+            ost += el.offsetTop
+            el = el.offsetParent
+          }
+          xy.x = event.pageX - osl
+          xy.y = event.pageY - ost
+          return xy
+        }
+
+      window.onload = function () {
+          w3c(window, document)
+          var div = document.createElement("div");
+          var test_area = document.getElementById("test-area")
+          var canvas = document.getElementById("cv")
+          var cv_cont = document.getElementById("cv-cont")
+          var ctx = canvas.getContext("2d")
+
+          div.innerHTML = "<b>press any key</b><br>"
+          div.className = "test"
+          document.body.appendChild(div)
+          w3c(document.body, canvas, test_area, cv_cont)
+
+          div.addEventListener("keydown", function (e) {
+              alert("error!")
+          }, false);
+
+          window.addEventListener("keydown", function (e) {
+              div.innerHTML += "<i>"+e.keyCode+"</i> "
+          }, false);
+
+          canvas.addEventListener('mousedown', function(e) {
+              var xy = getRelativeCoords(this, e)
+              //alert([e.pageX, e.pageY, xy.x, xy.y])
+              var inpath = ctx.isPointInPath( xy.x, xy.y );
+              drawCircle(ctx, 30, xy.x, xy.y)
+              ctx.fillStyle = inpath ? "red" : "blue";
+                ctx.fill();
+          }, false);
+
+          canvas.addEventListener('mouseup', function(e) {
+            ctx.clearRect(0,0,ctx.canvas.width, ctx.canvas.height)
+          }, false);
+
+          //alert([canvas.focus, canvas.click])
+          canvas.addEventListener('click', function(e) {
+              var xy = getRelativeCoords(this, e)
+               //alert("click!")
+
+              drawCircle(ctx, 30, xy.x, xy.y)
+              ctx.fillStyle = "blue";
+                ctx.fill();
+          }, false);
+
+          canvas.addEventListener('mouseenter', function(e) {
+              this.style.borderColor = "#f33"
+          }, false)
+
+          canvas.addEventListener('mouseleave', function(e) {
+              this.style.borderColor = "#444"
+          }, false)
+
+          cv_cont.addEventListener('mousedown', function() {
+              this.style.backgroundColor = "#eeeea8"
+          }, false);
+
+          cv_cont.addEventListener('mouseup', function() {
+              this.style.backgroundColor = "#eee"
+          }, false);
+
+          window.addEventListener("mouseup", function (e) {
+              this.document.body.style.backgroundColor = "#fff"
+          }, false)
+
+          window.addEventListener("mousedown", function (e) {
+              this.document.body.style.backgroundColor = "#ccffe5"
+          }, false)
+
+          window.addEventListener("click", function (e) {
+              this.document.body.style.backgroundColor = "#ffffcc"
+              var t = this
+              setTimeout(function () {
+                t.document.body.style.backgroundColor = "#fff"
+              }, 500)
+          }, false)
+
+          if (false && window.attachEvent ) {
+              window.attachEvent("onmouseup", function () {
+                  var e = window.event
+                  alert(["window: mouseup!", e.x, e.y])
+              })
+              window.attachEvent("onmousedown", function () {
+                  var e = window.event
+                  alert(["window: onmousedown!", e.x, e.y])
+              })
+              window.attachEvent("click", function () {
+                  var e = window.event
+                  alert(["window: click!", e.x, e.y])
+              })
+          }
+          /*
+          if (cv_cont.attachEvent)
+              cv_cont.attachEvent("onclick", function () {
+                  var e = window.event
+                  alert(["IE container click!", e.x, e.y])
+              })
+              */
+
+          document.addEventListener("keyup", function (e) {
+              div.innerHTML += "<b>"+e.keyCode+"</b> "
+          }, false);
+
+          test_area.addEventListener("keypress", function (e) {
+              this.value = [e.keyCode, e.charCode]
+          }, false);
+        }
+    </script>
+	</body>
+</html>

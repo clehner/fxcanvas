@@ -1,0 +1,25 @@
+A few rough tests to get started...
+
+    test.html - qunit test cases for the {create,get,put}ImageData() canvas functions
+    visual.html - a visual test that attempts to isolate any pixel format issues
+                  that may arise when dealing with Flash (ARGB vs RGBA) and also
+                  provides a very light but probably common use-case of all three
+                  ImageData functions.
+
+Worth noting:
+
+    createImageData(ImageData) doesn't seem to be implemented on any browsers yet.
+
+    Apart from that:
+
+        * All qunit tests pass on Chrome 4.1.249.1045 (42898) (Windows)
+        * All qunit tests pass on Chrome, Firefox 3.6 and Safari 4 (Mac) except for
+          some of the out-of-bounds getImageData calls.
+        * All tests pass visual.html
+
+Todo:
+
+    * Test putImageData's dirty* parameters
+    * Probably other stuff
+
+

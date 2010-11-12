@@ -1,0 +1,70 @@
+<html>
+  <head>
+    <script type="text/javascript" src="../jooscript.js"></script><script type="text/javascript" src="../fxcanvas.js"></script><!--[if IE]><script type="text/javascript" src="../flash_backend.js"></script><![endif]--><comment><script type="text/javascript" src="../canvas_backend.js"></script></comment>
+
+    <script type="text/javascript">
+      function star(ctx,r){
+        ctx.moveTo(r,0);
+        for (i=0;i<9;i++){
+          ctx.rotate(Math.PI/5);
+          if(i%2 == 0) {
+            ctx.lineTo((r/0.525731)*0.200811,0);
+          } else {
+            ctx.lineTo(r,0);
+          }
+        }
+      }
+      onload = function () {
+        var cv = document.getElementById("cv")
+        var ctx = cv.getContext("2d")
+        ctx.canvas.onload = function(img){
+
+          ctx.save()
+          ctx.translate(80, 80)
+          ctx.beginPath()
+          star(ctx, 80)
+          ctx.clip()
+          ctx.rotate(Math.PI/3)
+          ctx.translate(-100, -120)
+          ctx.drawImage(img, 20, 10)
+          ctx.restore()
+
+          ctx.save()
+          ctx.fillStyle = "green"
+          ctx.translate(200, 100)
+          ctx.rotate(Math.PI)
+          ctx.beginPath()
+          star(ctx, 50)
+          ctx.fill()
+          ctx.restore()
+
+          ctx.save()
+          ctx.font = "25px sans-serif"
+          ctx.fillStyle = "orange"
+          ctx.translate(130, -10)
+          ctx.rotate(Math.PI*0.1)
+          ctx.beginPath()
+          ctx.rect(0, 0, 120, 100)
+          ctx.clip()
+          ctx.fillText("Rhino is a group of five extant species of odd-toed ungulates in the family Rhinocerotidae.", 0, 30)
+          ctx.restore()
+
+          ctx.save()
+          ctx.font = "29px sans-serif"
+          ctx.fillStyle = "red"
+          ctx.translate(190, 30)
+          ctx.rotate(Math.PI*0.33)
+          ctx.beginPath()
+          ctx.rect(25, -10, 60, 150)
+          ctx.clip()
+          ctx.fillText("A star is a massive, luminous ball of plasma held together by gravity.", 0, 15)
+          ctx.restore()
+        }
+        ctx.canvas.loadImage("developer.mozilla.org/samples/canvas-tutorial/images/rhino.jpg")
+      }
+    </script>
+  </head>
+  <body>
+    <canvas id="cv"></canvas>
+  </body>
+</html>

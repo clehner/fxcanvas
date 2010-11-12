@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <script type="text/javascript" src="../../jooscript.js"></script><script type="text/javascript" src="../../fxcanvas.js"></script><!--[if IE]><script type="text/javascript" src="../../flash_backend.js"></script><![endif]--><comment><script type="text/javascript" src="../../canvas_backend.js"></script></comment>
+  <script src="jquery-1.4.2.min.js"></script>
+  <link rel="stylesheet" href="qunit.css" type="text/css" media="screen" />
+  <script type="text/javascript" src="qunit.js"></script>
+
+  <script>
+  $(document).ready(function(){
+
+    Array.prototype.compare = function(testArr) {
+        if (this.length != testArr.length) return false;
+        for (var i = 0; i < testArr.length; i++) {
+            if (this[i].compare) { 
+                if (!this[i].compare(testArr[i])) return false;
+            }
+            if (this[i] !== testArr[i]) return false;
+        }
+        return true;
+    }
+
+    var toArray = function(cpa) {
+        var a = [];
+        for (var i = 0; i < cpa.length; i++) {
+            a[i] = cpa[i];
+        }
+        return a;
+    }
+
+    module("CanvasRenderingContext2D", {
+        setup: function() {
+            this.w = 64;
+            this.h = 64;
+            this.canvas = document.createElement("canvas");
+            this.canvas.setAttribute("id", "testcanvas");
+            this.canvas.setAttribute("width", this.w);
+            this.canvas.setAttribute("height", this.h);
+            this.canvas.setAttribute("frameDuration", 10);
+            this.ctx = this.canvas.getContext("2d");
+            this.ctx.fillStyle = 'rgba(0,255,0,1.0)';
+            this.ctx.fillRect(0,0,this.w,this.h);
+            //document.body.appendChild(this.canvas)
+
+            this.transparentBlack = [];
+            for (var i = 0; i < this.w*this.h; i++) {
+                this.transparentBlack[i] = 0x0000000; //String.fromCharCode(0, 0, 0, 0);
+            }
+
+            this.opaqueGreen = [];
+            for (var i = 0; i < this.w*this.h; i++) {
+                this.opaqueGreen[i] = 0x00ff00ff; //String.fromCharCode(0, 255, 0, 255);
+            }
+        },
+        tearDown: function() {
+            this.canvas.parentNode.removeChild(this.canvas);
+        }
+    });
+    test("createImageData() - create from x,y", function() {
+        expect(2);
+        var imageData = this.ctx.createImageData(this.w, this.h);
+        equals(imageData.data.length, this.w*this.h, "length should be width*height");
+        same(toArray(imageData.data), this.transparentBlack, "pixel data should be initialized to transparent black");
+    });
+    test("createImageData() - create from ImageData", function() {
+        expect(2);
+        var source = this.ctx.createImageData(this.w, this.h);
+        var imageData = this.ctx.createImageData(source);
+        equals(imageData.data.length, this.w*this.h, "length should be width*height");
+        same(toArray(imageData.data), this.transparentBlack, "pixel data should be initialized to transparent black");
+    });
+    asyncTest("getImageData() - get entire canvas", function () {
+        expect(2);
+
+        var that = this;
+        this.ctx.invoke("getImageData", 0, 0, that.w, that.h, function(imageData) {
+            equals(imageData.data.length, that.w*that.h, "length should be width*height");
+            same(toArray(imageData.data), that.opaqueGreen, "pixel data should be opaque green (same as canvas)");
+            start();
+        });
+
+    });
+    asyncTest("getImageData() - out of bounds", function() {
+        expect(7);
+
+        var that = this;
+        var testPixel = function(x,y,nextTest) {
+            that.ctx.invoke("getImageData", x, y, 1, 1, function (imageData) {
+                same(toArray(imageData.data), [0x00000000 /*String.fromCharCode(0, 0, 0, 0)*/], "out-of-bounds pixel "+x+","+y+" should be transparent black");
+                if (nextTest) nextTest();
+            });
+        }
+
+        testPixel(-1,-1,  function() {
+        testPixel(-1,0,   function() {
+        testPixel(0,-1,   function() {
+        testPixel(that.w,-1,     function() {
+        testPixel(that.w,that.h, function() {
+        testPixel(-1,that.h,     function() {
+        testPixel(that.w,that.h,function() {
+            start(); }); }); }); }); }); }); });
+    });
+    asyncTest("getImageData() - get part of canvas", function() {
+        expect(2);
+        var x = this.w / 2;
+        var y = this.h / 2;
+        var w = this.w / 2;
+        var h = this.h / 2;
+        var that = this;
+        that.ctx.invoke("getImageData", x, y, w, h, function (imageData) {
+            equals(imageData.data.length, w*h, "length should be width*height");
+            same(toArray(imageData.data), that.opaqueGreen.slice(0, imageData.data.length), "pixel data should be opaque green (same as canvas)");
+            start();
+        });
+    });
+    asyncTest("getImageData() - get part of canvas (overlapping bounds)", function() {
+        expect(8);
+
+        var w = 16;
+        var h = 16;
+        var halfw = w/2;
+        var halfh = w/2;
+        var that = this;
+        //
+        // ################
+        // #### canvas ####
+        // ################
+        // ################
+        // ################
+        // ########++++++++........
+        // ########++++++++........
+        // ########++++++++........
+        // ########++++++++........
+        //         ................
+        //         ................
+        //         ..getImageData..
+        //         ................
+        //
+        // # = canvas pixels ignored by getImageData
+        // + = canvas pixels retrieved by getImageData
+        // . = out of bounds pixels retrieved by getImageData
+        //
+        var a = [];
+        for (var y = 0; y < w; y++) {
+            for (var x = 0; x < h; x++) {
+                var ofs = (y)*w+(x);
+                if (y < halfh && x < halfw) {
+                    a[ofs] = 0x00ff00ff; //String.fromCharCode(0, 255, 0, 255)
+                } else {
+                    a[ofs] = 0x00000000; //String.fromCharCode(0, 0, 0, 0)
+                }
+            }
+        }
+        var bottomRight = a;
+        this._test0 = function () {
+            that.ctx.invoke("getImageData", that.w-halfw, that.h-halfh, w, h, function (imageData) {
+                same(toArray(imageData.data), bottomRight, "overlapping bottom-right: pixels within canvas should be opaque green; pixels outside canvas should be transparent black");
+                that._test1();
+            });
+        };
+
+        //
+        //         ................
+        //         ................
+        //         ..getImageData..
+        //         ................
+        // ########++++++++........
+        // ########++++++++........
+        // ########++++++++........
+        // ########++++++++........
+        // ################
+        // ################
+        // #### canvas ####
+        // ################
+        //
+        var a = [];
+        for (var y = 0; y < w; y++) {
+            for (var x = 0; x < h; x++) {
+                var ofs = (y)*w+(x);
+                if (y >= halfh && x < halfw) {
+                    a[ofs] = 0x00ff00ff; //String.fromCharCode(0, 255, 0, 255)
+                } else {
+                    a[ofs] = 0x00000000; //String.fromCharCode(0, 0, 0, 0)
+                }
+            }
+        }
+        var topRight = a;
+        this._test1 = function () {
+            this.ctx.invoke("getImageData", this.w-halfw, 0-halfh, w, h, function (imageData) {
+                same(toArray(imageData.data), topRight, "overlapping top-right: pixels within canvas should be opaque green; pixels outside canvas should be transparent black");
+                that._test2();
+            });
+        };
+
+        //
+        // ................
+        // ................
+        // ..getImageData..
+        // ................
+        // ........++++++++########
+        // ........++++++++########
+        // ........++++++++########
+        // ........++++++++########
+        //         ################
+        //         ################
+        //         #### canvas ####
+        //         ################
+        //
+        var a = [];
+        for (var y = 0; y < w; y++) {
+            for (var x = 0; x < h; x++) {
+                var ofs = (y)*w+(x);
+                if (y >= halfh && x >= halfw) {
+                    a[ofs] = 0x00ff00ff; //String.fromCharCode(0, 255, 0, 255)
+                } else {
+                    a[ofs] = 0x00000000; //String.fromCharCode(0, 0, 0, 0)
+                }
+            }
+        }
+        var topLeft = a;
+        this._test2 = function () {
+            this.ctx.invoke("getImageData", 0-halfw, 0-halfh, w, h, function (imageData) {
+                same(toArray(imageData.data), topLeft, "overlapping top-left: pixels within canvas should be opaque green; pixels outside canvas should be transparent black");
+                that._test3();
+            });
+        };
+
+        //
+        //         ################
+        //         #### canvas ####
+        //         ################
+        //         ################
+        // ........++++++++########
+        // ........++++++++########
+        // ........++++++++########
+        // ........++++++++########
+        // ................
+        // ................
+        // ..getImageData..
+        // ................
+        //
+        var a = [];
+        for (var y = 0; y < w; y++) {
+            for (var x = 0; x < h; x++) {
+                var ofs = (y)*w+(x);
+                if (y < halfh && x >= halfw) {
+                    a[ofs] = 0x00ff00ff; //String.fromCharCode(0, 255, 0, 255)
+                } else {
+                    a[ofs] = 0x00000000; //String.fromCharCode(0, 0, 0, 0)
+                }
+            }
+        }
+        var bottomLeft = a;
+        this._test3 = function () {
+            this.ctx.invoke("getImageData", 0-halfw, this.h-halfh, w, h, function (imageData) {
+                same(toArray(imageData.data), bottomLeft, "overlapping bottom-left: pixels within canvas should be opaque green; pixels outside canvas should be transparent black");
+                that._test4();
+            });
+        };
+
+        //
+        // ################
+        // #### canvas ####
+        // ################
+        // ################
+        // ++++++++++++++++
+        // ++++++++++++++++
+        // ++++++++++++++++
+        // ++++++++++++++++
+        // ................
+        // ................
+        // ..getImageData..
+        // ................
+        //
+        var a = [];
+        for (var y = 0; y < w; y++) {
+            for (var x = 0; x < h; x++) {
+                var ofs = (y)*w+(x);
+                if (y < halfh) {
+                    a[ofs] = 0x00ff00ff; //String.fromCharCode(0, 255, 0, 255)
+                } else {
+                    a[ofs] = 0x00000000; //String.fromCharCode(0, 0, 0, 0)
+                }
+            }
+        }
+        var bottom = a;
+        this._test4 = function () {
+            this.ctx.invoke("getImageData", 0, this.h-halfh, w, h, function (imageData) {
+                same(toArray(imageData.data), bottom, "overlapping bottom: pixels within canvas should be opaque green; pixels outside canvas should be transparent black");
+                that._test5();
+            });
+        };
+
+        //
+        // ........++++++++########
+        // ..getI..++++++++#canvas#
+        // ..mgeD..++++++++########
+        // ..ata...++++++++########
+        // ........++++++++########
+        // ........++++++++########
+        // ........++++++++########
+        // ........++++++++########
+        //
+        var a = [];
+        for (var y = 0; y < w; y++) {
+            for (var x = 0; x < h; x++) {
+                var ofs = (y)*w+(x);
+                if (x >= halfw) {
+                    a[ofs] = 0x00ff00ff; //String.fromCharCode(0, 255, 0, 255)
+                } else {
+                    a[ofs] = 0x00000000; //String.fromCharCode(0, 0, 0, 0)
+                }
+            }
+        }
+        var left = a;
+        this._test5 = function () {
+            this.ctx.invoke("getImageData", 0-halfw, 0, w, h, function (imageData) {
+                same(toArray(imageData.data), left, "overlapping left: pixels within canvas should be opaque green; pixels outside canvas should be transparent black");
+                that._test6();
+            });
+        };
+
+        //
+        // ########++++++++........
+        // #canvas#++++++++..getI..
+        // ########++++++++..mgeD..
+        // ########++++++++..ata...
+        // ########++++++++........
+        // ########++++++++........
+        // ########++++++++........
+        // ########++++++++........
+        //
+        var a = [];
+        for (var y = 0; y < w; y++) {
+            for (var x = 0; x < h; x++) {
+                var ofs = (y)*w+(x);
+                if (x < halfw) {
+                    a[ofs] = 0x00ff00ff; //String.fromCharCode(0, 255, 0, 255)
+                } else {
+                    a[ofs] = 0x00000000; //String.fromCharCode(0, 0, 0, 0)
+                }
+            }
+        }
+        var right = a;
+        this._test6 = function () {
+            this.ctx.invoke("getImageData", this.w-halfw, 0, w, h, function (imageData) {
+                same(toArray(imageData.data), right, "overlapping right: pixels within canvas should be opaque green; pixels outside canvas should be transparent black");
+                that._test7();
+            });
+        };
+
+        //
+        // ................
+        // ................
+        // ..getImageData..
+        // ................
+        // ++++++++++++++++
+        // ++++++++++++++++
+        // ++++++++++++++++
+        // ++++++++++++++++
+        // ################
+        // #### canvas ####
+        // ################
+        // ################
+        //
+        var a = [];
+        for (var y = 0; y < w; y++) {
+            for (var x = 0; x < h; x++) {
+                var ofs = (y)*w+(x);
+                if (y >= halfh) {
+                    a[ofs] = 0x00ff00ff; //String.fromCharCode(0, 255, 0, 255)
+                } else {
+                    a[ofs] = 0x00000000; //String.fromCharCode(0, 0, 0, 0)
+                }
+            }
+        }
+        var top = a;
+        this._test7 = function () {
+            this.ctx.invoke("getImageData", 0, 0-halfh, w, h, function (imageData) {
+                same(toArray(imageData.data), top, "overlapping bottom-left: pixels within canvas should be opaque green; pixels outside canvas should be transparent black");
+                start();
+            });
+        }
+
+        this._test0();
+
+    });
+    asyncTest("putImageData() - (depends on createImageData() and getImageData())", function() {
+        expect(2);
+
+        var imageData = this.ctx.createImageData(16, 16);
+        //var pixel = [ 0, 0, 255, 255 ];
+        for (var y = 0; y < imageData.height; y++) {
+            for (var x = 0; x < imageData.width; x++) {
+              var ofs = (y)*(imageData.width)+(x);
+                imageData.data[ofs] = 0x0000ffff; //String.fromCharCode.apply(null, pixel)
+            }
+        }
+        var that = this;
+        this.ctx.invoke("putImageData", imageData, 0, 0, function () {
+            that.ctx.invoke("getImageData", 0, 0, imageData.width, imageData.height, function (tmp) {
+                equals(tmp.data.length, imageData.data.length, "length of got-pixels should be the same length of put-pixels");
+                same(toArray(tmp.data), toArray(imageData.data), "pixels we get should be the same as the pixels we put");
+                start();
+            });
+        });
+    });
+  });
+  </script>
+  
+</head>
+<body>
+  <h1 id="qunit-header">fxcanvas tests</h1>
+  <h2 id="qunit-banner"></h2>
+  <h2 id="qunit-userAgent"></h2>
+  <ol id="qunit-tests"></ol>
+</body>
+</html>

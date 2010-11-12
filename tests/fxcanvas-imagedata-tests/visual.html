@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <script type="text/javascript" src="../../jooscript.js"></script><script type="text/javascript" src="../../fxcanvas.js"></script><!--[if IE]><script type="text/javascript" src="../../flash_backend.js"></script><![endif]--><comment><script type="text/javascript" src="../../canvas_backend.js"></script></comment>
+    <script type="text/javascript">//<![CDATA[
+
+        function testImageData () {
+            var canvas;
+            var ctx;
+            var start = new Date, end;
+
+            canvas = document.getElementById("redcanvas");
+            ctx = canvas.getContext("2d");
+
+            // red
+            var buf = ctx.createImageData(canvas.width, canvas.height);
+            var start = new Date, tp1, tp2, tp3, tp5, tp6, tp7, end;
+            for (var y = 0; y < canvas.height; y++) 
+            {
+                for (var x = 0; x < canvas.width; x++) 
+                {
+                    var ofs = y * canvas.width + x;
+                    buf.data[ofs] = 0xff0000ff; //String.fromCharCode(255, 0, 0, 255);
+                }
+            }
+            var tp1 = new Date;
+
+            ctx.invoke("putImageData", buf, 0, 0, function() {
+
+                // green
+                ctx.invoke("getImageData", 0, 0, canvas.width, canvas.height, function(buf) {
+                    canvas = document.getElementById("greencanvas");
+                    ctx = canvas.getContext("2d");
+                    var tp2 = new Date;
+                    for (var y = 0; y < canvas.height; y++) 
+                    {
+                        for (var x = 0; x < canvas.width; x++) 
+                        {
+                            var ofs = y * canvas.width + x;
+                            var tmp = buf.data[ofs],
+                                red = tmp >> 24 & 0xFF,
+                                green = tmp >> 16 & 0xFF,
+                                blue = tmp >> 8 & 0xFF,
+                                alpha = tmp & 0xFF;
+
+                            buf.data[ofs] = (green << 24) + (red << 16) + (blue << 8) + alpha
+                            /*
+                            buf.data[ofs] = String.fromCharCode(tmp.charCodeAt(1), 
+                                                                tmp.charCodeAt(0),
+                                                                tmp.charCodeAt(2),
+                                                                tmp.charCodeAt(3));
+                                                                */
+                        }
+                    }
+                    var tp3 = new Date;
+
+                    ctx.invoke("putImageData", buf, 0, 0, function() {
+
+                        // blue
+                        ctx.invoke("getImageData", 0, 0, canvas.width, canvas.height, function(buf) {
+                            canvas = document.getElementById("bluecanvas");
+                            ctx = canvas.getContext("2d");
+                            var tp4 = new Date;
+                            for (var y = 0; y < canvas.height; y++) 
+                            {
+                                for (var x = 0; x < canvas.width; x++) 
+                                {
+                                    var ofs = y * canvas.width + x;
+                                    var tmp = buf.data[ofs],
+                                        red = tmp >> 24 & 0xFF,
+                                        green = tmp >> 16 & 0xFF,
+                                        blue = tmp >> 8 & 0xFF,
+                                        alpha = tmp & 0xFF;
+
+                                    buf.data[ofs] = (red << 24) + (blue << 16) + (green << 8) + alpha
+                                    /*
+                                    buf.data[ofs] = String.fromCharCode(tmp.charCodeAt(0), 
+                                                                        tmp.charCodeAt(2),
+                                                                        tmp.charCodeAt(1),
+                                                                        tmp.charCodeAt(3));
+                                                                        */
+                                }
+                            }
+                            var tp5 = new Date;
+
+                            ctx.invoke("putImageData", buf, 0, 0, function() {
+
+                                // white
+                                ctx.invoke("getImageData", 0, 0, canvas.width, canvas.height, function(buf) {
+                                    canvas = document.getElementById("whitecanvas");
+                                    ctx = canvas.getContext("2d");
+                                    var tp6 = new Date;
+                                    for (var y = 0; y < canvas.height; y++) 
+                                    {
+                                        for (var x = 0; x < canvas.width; x++) 
+                                        {
+                                            var ofs = y * canvas.width + x;
+                                            var tmp = buf.data[ofs],
+                                                red = tmp >> 24 & 0xFF,
+                                                green = tmp >> 16 & 0xFF,
+                                                blue = tmp >> 8 & 0xFF,
+                                                alpha = tmp & 0xFF;
+
+                                            buf.data[ofs] = (alpha << 24) + (alpha << 16) + (alpha << 8) + alpha
+                                            /*
+                                            buf.data[ofs] = String.fromCharCode(tmp.charCodeAt(4), 
+                                                                                tmp.charCodeAt(4),
+                                                                                tmp.charCodeAt(4),
+                                                                                tmp.charCodeAt(4));
+                                                                                */
+                                        }
+                                    }
+                                    var tp7 = new Date;
+
+                                    ctx.invoke("putImageData", buf, 0, 0, function() {
+                                        end = new Date;
+                                        //alert("test took " + (end - start) + "ms")
+                                        var total = end - start;
+                                        var cooking  = (tp3 - tp2) + (tp5 - tp4) + (tp7 - tp6);
+alert("test took "+total+"ms (making data: "+cooking+"ms + transition: "+(total-cooking)+"ms)")
+                                        // run in eternal loop to test time degradation
+                                        //testImageData();
+                                    });
+                                });
+                            });
+                        });
+                    });
+                });
+            });
+        };
+
+        window.onload = testImageData;
+
+    //]]></script>
+    <style type="text/css">
+    canvas, div, h3 { margin:8px; padding:0; width:256px; float:left; clear:none; text-align:center; border:1px solid gray; }
+    canvas, div { height:256px; }
+    canvas { clear:left; }
+    #red { background-color:#f00; }
+    #green { background-color:#0f0; }
+    #blue { background-color:#00f; }
+    #white { background-color:#fff; }
+    h1, p { float:none; clear:both; width:500px; margin:16px 8px; }
+    </style>
+</head>
+<body>
+    <h1>ImageData visual test</h1>
+    <p>You should see eight boxes: 2 red, 2 green, 2 blue and 2 white, in that order.</p>
+    <h3 style="clear:left;">&lt;canvas&gt;</h3><h3>&lt;div&gt;</h3>
+    <canvas id="redcanvas" width=256 height=256></canvas><div id="red"></div>
+    <p><em>Note: The rest of these boxes each depend on the previous box (as a way to test getImageData), so if the red box is wrong these will all probably break.</em></p>
+    <canvas id="greencanvas" width=256 height=256></canvas><div id="green"></div>
+    <canvas id="bluecanvas" width=256 height=256></canvas><div id="blue"></div>
+    <canvas id="whitecanvas" width=256 height=256></canvas><div id="white"></div>
+    <p><em>Note: If you saw 2 blue and 6 white boxes there may be an ARGB/RGBA conversion issue when translating to/from Flash.</em></p>
+</body>
+</html>

@@ -1,0 +1,63 @@
+
+<script type="text/javascript">
+    var sum_r1 = [], sum_r2 = [], count = 0;
+
+    function test() 
+    {
+        var width = 256, height = 256;
+        var r1, r2, s1 = "", s2 = "";
+
+        var t1 = new Array(width * height);
+        var t2 = new Array(width * height);
+
+        for (var offs = 0; offs<width * height; offs++) {
+            t1[offs] = Math.round(Math.random() * 100000000)
+        }
+        s1 = t1.join(",")
+
+        for (var offs = 0; offs<width * height; offs++) {
+            var red = Math.round(Math.random() * 100) % 255, 
+                green = Math.round(Math.random() * 100) % 255, 
+                blue = Math.round(Math.random() * 100) % 255, 
+                alpha = Math.round(Math.random() * 100) % 255;
+            t2[offs] = String.fromCharCode(red, green, blue, alpha)
+        }
+        s2 = t2.join(",")
+
+        var d = new Date;
+
+        var x = s1.split(",");
+        for (var offs = 0; offs<width * height; offs++) {
+            x[offs] += 0;
+        }
+
+        r1 = new Date - d
+        x  = new Array(width * height);
+        d = new Date
+
+        for (var offs = 0; offs<width * height; offs++) {
+            var red = s2.charCodeAt(offs),
+                green = s2.charCodeAt(offs + 1), 
+                blue = s2.charCodeAt(offs + 2), 
+                alpha = s2.charCodeAt(offs + 3);
+            x[offs] = (red << 24) + (green << 16) + (blue << 8) + alpha;
+        }
+
+        r2 = new Date - d
+
+        sum_r1[count] = r1
+        sum_r2[count] = r2
+
+        var x1 = 0, x2 = 0
+        for (var i=0; i<count; i++) {
+            x1 += sum_r1[i]  
+            x2 += sum_r2[i]  
+        }
+
+        console.log([Math.round(x1 / count), Math.round(x2 / count)])
+
+        count += 1
+    }
+
+    setInterval(test, 1000)
+</script>

@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Overflow Test</title>
+<style>
+
+body {
+  text-align: center
+}
+
+</style>
+    <script type="text/javascript" src="../../../jooscript.js"></script><script type="text/javascript" src="../../../fxcanvas.js"></script><!--[if IE]><script type="text/javascript" src="../../../flash_backend.js"></script><![endif]--><comment><script type="text/javascript" src="../../../canvas_backend.js"></script></comment>
+<script>
+
+window.onload = function() {
+  var ctx = document.getElementById('c').getContext('2d');
+
+  var img = document.images[0];
+
+  ctx.canvas.onload = function (img_) {
+    ctx.rotate(Math.PI / 8);
+    ctx.drawImage(img_, 50, 50);
+  }
+  ctx.canvas.loadImage(img)
+
+  img.style.display = 'none';
+
+};
+
+</script>
+</head>
+<body>
+
+<img src="../examples/ff.jpg">
+
+<canvas id=c width=200 height=200></canvas>
+
+</body>
+</html>

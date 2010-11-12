@@ -1,0 +1,54 @@
+<html>
+  <head>
+    <title>Canvas drawImage example 3</title>
+    <meta name="DC.creator" content="Kamiel Martinet, http://www.martinet.nl/">
+    <meta name="DC.publisher" content="Mozilla Developer Center, http://developer.mozilla.org">
+    <script type="text/javascript" src="../../../../jooscript.js"></script><script type="text/javascript" src="../../../../fxcanvas.js"></script><!--[if IE]><script type="text/javascript" src="../../../../flash_backend.js"></script><![endif]--><comment><script type="text/javascript" src="../../../../canvas_backend.js"></script></comment>
+    <script id="sourceScript" type="text/javascript">
+function draw () {
+    var canvas = document.getElementById('canvas');
+    var ctx = canvas.getContext('2d');
+    var source = document.getElementById('source');
+    var frame = document.getElementById('frame');
+
+    function draw(img) {
+        if (img.src.indexOf("rhino") > -1)
+            ctx.drawImage(img,33,71,104,124,21,20,87,104);
+        else 
+          if (img.src.indexOf("picture_frame") > -1)
+            ctx.drawImage(img,0,0);
+    }
+    canvas.onload = draw;
+    canvas.loadImage(source, frame);
+};
+    </script>
+    <style type="text/css">
+      body { margin: 20px; font-family: arial,verdana,helvetica; background: #fff;}
+      h1 { font-size: 140%; font-weight:normal; color: #036; border-bottom: 1px solid #ccc; }
+      h2 { font-size: 100%; color: #036; }
+      canvas { float: left; margin-right: 20px; margin-bottom: 20px; }
+      pre { float:left; display:block; background: rgb(238,238,238); border: 1px dashed #666; padding: 15px 20px; margin: 0 0 10px 0; }
+    </style>
+  </head>
+  <body onload="draw()">
+    <div>
+      <h1>Canvas <code>drawImage</code> example 3</h1>
+      <canvas id="canvas" width="150" height="150"></canvas>
+            <pre id="sourceText">
+            </pre>
+  <script type="text/javascript">
+    var script = document.getElementById("sourceScript")
+    if(script.textContent) {
+      document.getElementById("sourceText").textContent = script.textContent;
+    } else {
+      document.getElementById("sourceText").innerText = script.innerHTML;
+    }
+  </script>
+      <div style="float:left;">
+        <h2>Source images</h2>
+        <img id="source" src="images/rhino.jpg" width="300" height="227" alt="">
+        <img id="frame" src="images/picture_frame.png" width="132" height="150" alt="">
+      </div>
+    </div>
+  </body>
+</html>

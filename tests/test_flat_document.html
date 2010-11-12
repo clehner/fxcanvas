@@ -1,0 +1,17 @@
+
+<!--<html><head></head><body>-->
+
+<script type="text/javascript" src="../jooscript.js"></script><script type="text/javascript" src="../fxcanvas.js"></script><!--[if IE]><script type="text/javascript" src="../flash_backend.js"></script><![endif]--><comment><script type="text/javascript" src="../canvas_backend.js"></script></comment>
+
+<canvas width=200 height=200 id=cv></canvas>
+
+<script type="text/javascript">
+window.addEventListener("load", function() {
+  var canvas = document.getElementById("cv")
+  var ctx = canvas.getContext("2d");
+  ctx.font = "16px Arial"
+  ctx.fillText("passed", 100, 100);
+}, false);
+</script>
+
+<!--<body></html>-->

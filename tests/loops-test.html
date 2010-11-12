@@ -1,0 +1,34 @@
+<script type="text/javascript">
+    var sum_r1 = [], sum_r2 = [], count = 0;
+    function test() {
+        var r1, r2, d = new Date, t = 0, iter = 800000;
+
+        for (var i = 0; i<iter ; i+=1) {
+            t = Math.round(Math.random() * 100) * 123
+        }
+
+        r1 = new Date - d
+        d = new Date
+
+        for (var i = 0; i<iter; i++) {
+            t = Math.round(Math.random() * 100) * 123
+        }
+
+        r2 = new Date - d
+
+        sum_r1[count] = r1
+        sum_r2[count] = r2
+
+        var x1 = 0, x2 = 0
+        for (var i=0; i<count; i++) {
+            x1 += sum_r1[i]  
+            x2 += sum_r2[i]  
+        }
+
+        console.log([x1 / count, x2 / count])
+
+        count += 1
+    }
+
+    setInterval(test, 1000)
+</script>

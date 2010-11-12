@@ -1,0 +1,81 @@
+<html>
+  <head>
+    <title>Canvas Art gallery</title>
+    <meta name="DC.creator" content="Kamiel Martinet, http://www.martinet.nl/">
+    <meta name="DC.publisher" content="Mozilla Developer Center, http://developer.mozilla.org">
+    <script type="text/javascript" src="../../../../jooscript.js"></script><script type="text/javascript" src="../../../../fxcanvas.js"></script><!--[if IE]><script type="text/javascript" src="../../../../flash_backend.js"></script><![endif]--><comment><script type="text/javascript" src="../../../../canvas_backend.js"></script></comment>
+    <script type="text/javascript">
+
+        function draw() {
+
+          var i, canvas, content;
+        
+          // Loop through all images
+          for (i=0;i<document.images.length;i++){
+        
+            // Don't add a canvas for the frame image
+            if (document.images[i].getAttribute('id')!='frame'){
+        
+              // Create canvas element
+              canvas = document.createElement('CANVAS');
+              canvas.setAttribute('width',132);
+              canvas.setAttribute('height',150);
+        
+              // Insert before the image
+              document.images[i].parentNode.insertBefore(canvas,document.images[i]);
+        
+              //if (typeof FlashCanvas != "undefined") FlashCanvas.initElement(canvas);
+              ctx = canvas.getContext('2d');
+        
+              ctx.canvas.onload = function drawPicture (pic) {
+                this.loadedPictures += 1
+
+                if (pic.src.indexOf("picture_frame.png") > -1)
+                  this.frame = pic
+                else
+                  this.picture = pic
+
+                // wait until all images have been loaded
+                if (!this.frame || !this.picture)
+                  return
+
+                var ctx = this.getContext("2d")
+
+                // Draw image to canvas
+                ctx.drawImage(this.picture, 15, 20);
+          
+                // Add frame
+                ctx.drawImage(this.frame, 0, 0);
+              }
+
+              ctx.canvas.loadedPictures = 0
+              ctx.canvas.loadImage(document.images[i], document.getElementById('frame'))
+            }
+          }
+        }
+    </script>
+    <style type="text/css">
+      body { background: 0 -100px repeat-x url(images/bg_gallery.png) #4F191A; margin:10px; }
+      img { display:none; }
+      table { margin: 0 auto; }
+      td { padding:15px; }
+    </style>
+  </head>
+  <body onload="draw();">
+    <table align="center">
+      <tr>
+        <td><img src="images/gallery_1.jpg"></td>
+        <td><img src="images/gallery_2.jpg"></td>
+        <td><img src="images/gallery_3.jpg"></td>
+        <td><img src="images/gallery_4.jpg"></td>
+      </tr>
+      <tr>
+        <td><img src="images/gallery_5.jpg"></td>
+        <td><img src="images/gallery_6.jpg"></td>
+        <td><img src="images/gallery_7.jpg"></td>
+        <td><img src="images/gallery_8.jpg"></td>
+      </tr>
+    </table>
+    <img src="images/picture_frame.png" width="132" height="150" id="frame">
+  </body>
+</html>

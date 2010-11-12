@@ -1,0 +1,99 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<?xml version="1.0" encoding="UTF-8"?>
+
+<html xmlns='http://www.w3.org/1999/xhtml'>
+<head>
+    <title>Testcase isPointInPath</title>
+    <style type='text/css'>
+        body, html
+        {
+            /*  so that the canvas is at the top left of the page for testcase purposes
+                -> pageX / pageY point exactly in the canvas    */
+            margin: 0;
+            padding: 0;
+        }
+    </style>
+    <script type="text/javascript" src="../jooscript.js"></script><script type="text/javascript" src="../fxcanvas.js"></script><!--[if IE]><script type="text/javascript" src="../flash_backend.js"></script><![endif]--><comment><script type="text/javascript" src="../canvas_backend.js"></script></comment>
+
+    <script type='text/javascript'>
+    //<![CDATA[
+        CanvasRenderingContext2D.prototype.isPointInPath_mozilla = function( x, y )
+        {
+            this.save();
+            this.setTransform( 1, 0, 0, 1, 0, 0 );
+            var ret = this.isPointInPath( x, y );
+            this.restore();
+            return ret;
+        }
+        
+        //  draws a circle in given position. change color if mouse is inside.
+        function drawCircle( radius, pos, mousepos )
+        {
+            ctx.beginPath();
+            //ctx.moveTo( pos[ 0 ] + radius, pos[ 1 ] );
+            ctx.arc( pos[ 0 ], pos[ 1 ], radius, 0, 360, false );
+            var inpath;
+            //if( document.getElementById( "workaround" ).checked )
+            if( false )
+            {
+                inpath = ctx.isPointInPath_mozilla( mousepos[ 0 ], mousepos[ 1 ] );
+            }
+            else
+            {
+                inpath = ctx.isPointInPath( mousepos[ 0 ], mousepos[ 1 ] );
+            }
+            ctx.fillStyle = inpath ? "red" : "blue";
+            ctx.fill();
+        }
+        function drawRect( width, pos, mousepos )
+        {
+            ctx.beginPath();
+            //ctx.moveTo( pos[ 0 ] + radius, pos[ 1 ] );
+            var inpath;
+            ctx.rect( pos[ 0 ], pos[ 1 ], width, width);
+            inpath = ctx.isPointInPath( mousepos[ 0 ], mousepos[ 1 ] );
+            ctx.fillStyle = inpath ? "red" : "blue";
+            ctx.fill();
+        }
+        function drawCircles( e )
+        {
+          var targ;
+        	if (!e) var e = window.event;
+          //var o = ""; for(var i in e) o += i + ": " + e[i] + "\n"; alert(o);
+          //alert(e.screenX)
+
+            var mousepos = [ 0, 0 ];
+            if( e )
+            {
+                mousepos = [ e.pageX || e.x, e.pageY || e.y ];
+            }
+            ctx.save();
+            ctx.clearRect( 0, 0, canvas.width, canvas.height );
+            drawCircle( 30, [ 100, 100 ], mousepos );
+            ctx.translate( 100, 0 );
+            ctx.scale( .7, .7 );
+            ctx.rotate( .4 );
+            drawCircle( 30, [ 100, 200 ], mousepos );
+            ctx.restore();
+        }
+        window.onload = function()
+        {
+            window.canvas = document.getElementById( "canvas" );
+            window.ctx = canvas.getContext( "2d" );
+            canvas.onmousemove = drawCircles;
+            drawCircles();
+        }
+    //]]>
+    </script>
+</head>
+<body>
+    <canvas width='300' height='300' id='canvas'></canvas><br />
+    <!--<input type='checkbox' id='workaround' /> Use workaround<br />-->
+    The center of the first circle is positionned at [ 100, 100 ].<br />
+    The second at [ 100, 200 ], but translated 100px to the right, scaled and rotated.<br />
+    <!--The workaround sets first the matrix to the identity matrix before calling isPointInPath.-->
+    <!--The workaround doesn't work with Opera, unfortunately, since the matrix is applied on filling in Opera, and not when creating the path...-->
+</body>
+</html>

@@ -1,0 +1,54 @@
+<html>
+  <head>
+    <title>Canvas drawImage example 1</title>
+    <meta name="DC.creator" content="Kamiel Martinet, http://www.martinet.nl/">
+    <meta name="DC.publisher" content="Mozilla Developer Center, http://developer.mozilla.org">
+    <script type="text/javascript" src="../../../../jooscript.js"></script><script type="text/javascript" src="../../../../fxcanvas.js"></script><!--[if IE]><script type="text/javascript" src="../../../../flash_backend.js"></script><![endif]--><comment><script type="text/javascript" src="../../../../canvas_backend.js"></script></comment>
+    <script id="sourceScript" type="text/javascript">
+function draw() {
+  var ctx = document.getElementById('canvas').getContext('2d');
+
+  ctx.canvas.onload = function(img){
+    ctx.drawImage(img,0,0);
+    ctx.beginPath();
+    ctx.moveTo(30,96);
+    ctx.lineTo(70,66);
+    ctx.lineTo(103,76);
+    ctx.lineTo(170,15);
+    ctx.stroke();
+
+    // prevent IE6 memory leak
+    img = null;
+  }
+  ctx.canvas.loadImage(document.getElementsByTagName("img")[0])
+}
+    </script>
+    <style type="text/css">
+      body { margin: 20px; font-family: arial,verdana,helvetica; background: #fff;}
+      h1 { font-size: 140%; font-weight:normal; color: #036; border-bottom: 1px solid #ccc; }
+      h2 { font-size: 100%; color: #036; }
+      canvas { float: left; margin-right: 20px; margin-bottom: 20px; }
+      pre { float:left; display:block; background: rgb(238,238,238); border: 1px dashed #666; padding: 15px 20px; margin: 0 0 10px 0; }
+    </style>
+  </head>
+  <body onload="draw();">
+    <h1>Canvas <code>drawImage</code> example 1</h1>
+    <div>
+      <canvas id="canvas" width="180" height="130"></canvas>
+            <pre id="sourceText">
+            </pre>
+  <script type="text/javascript">
+    var script = document.getElementById("sourceScript")
+    if(script.textContent) {
+      document.getElementById("sourceText").textContent = script.textContent;
+    } else {
+      document.getElementById("sourceText").innerText = script.innerHTML;
+    }
+  </script>
+      <div style="float:left;">
+        <h2>Source image</h2>
+        <img src="images/backdrop.png"/>
+      </div>
+    </div>
+  </body>
+</html>

@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Example of working with image data</title>
+    <!--<script src="../debug.php" type="text/javascript"></script>-->
+    <script type="text/javascript" src="../jooscript.js"></script><script type="text/javascript" src="../fxcanvas.js"></script><!--[if IE]><script type="text/javascript" src="../flash_backend.js"></script><![endif]--><comment><script type="text/javascript" src="../canvas_backend.js"></script></comment>
+    <script id="source" type="text/javascript">
+onload = function () {
+  var canvas = document.getElementById("cv1");
+  var ctx = canvas.getContext("2d");
+
+  var im_src = "night-in-village.jpg";
+  canvas.onload = function(img) 
+  {
+    if (img.src.indexOf(im_src) > -1) 
+    {
+      // draw loaded image
+      ctx.invoke("drawImage", img, 0, 0, canvas.width, canvas.height, function() 
+      {
+        // get rendered image data
+        ctx.invoke("getImageData", 0, 0, canvas.width, canvas.height, function(buf) 
+        {
+          var ctx = document.getElementById("cv2").getContext("2d");
+
+          // exchange colors
+          for (var y = 0; y < canvas.height; y++) {
+            for (var x = 0; x < canvas.width; x++) {
+               var ofs = y * canvas.width + x,
+                   pixelValue = buf.data[ofs],
+                   red = pixelValue >> 24 & 0xFF,
+                   green = pixelValue >> 16 & 0xFF,
+                   blue = pixelValue >> 8 & 0xFF,
+                   alpha = pixelValue & 0xFF;
+               buf.data[ofs] = (blue << 24) + (red << 16) + (green << 8) + alpha;;
+            }
+          }
+
+          // put it on the next canvas
+          ctx.invoke("putImageData",buf, 0, 0, function () 
+          {
+            var ctx = document.getElementById("cv3").getContext("2d");
+
+            ctx.canvas.onload = function(cv2) 
+            {
+              // drawImage with previous canvas as argument
+              ctx.invoke("drawImage", cv2, 0, 0, function () 
+              {
+                // test toDataURL("image/png")
+                ctx.canvas.toDataURL("image/png", function (png_data)
+                {
+                  // test toDataURL("image/jpeg")
+                  var jpeg_mime = "image/jpeg";
+                  // picture quality
+                  var jpeg_qual = 0.3;
+                  // jpeg data handler
+                  var jpeg_handler = function (jpeg_data) {
+                      var canvas = document.getElementById("cv5");
+                      var ctx = canvas.getContext("2d");
+                      canvas.onload = function (img) {
+                        // draw data uri
+                        this.getContext("2d").drawImage(img, 0, 0);
+                      }
+                      canvas.loadImage(jpeg_data);
+                  };
+                  // Firefox throws an exception if called with quality argument
+                  if (navigator.userAgent.match("Firefox"))
+                    ctx.canvas.toDataURL(jpeg_mime, jpeg_handler);
+                  else
+                    ctx.canvas.toDataURL(jpeg_mime, jpeg_qual, jpeg_handler);
+
+                  canvas = document.getElementById("cv4");
+                  ctx = canvas.getContext("2d");
+                  canvas.onload = function (img) {
+                    // draw data uri
+                    this.getContext("2d").drawImage(img, 0, 0);
+                  }
+                  canvas.loadImage(png_data);
+                });
+              });
+            }
+            ctx.canvas.loadImage(document.getElementById("cv2"))
+          });
+        });
+      });
+    }
+  }
+  // load image
+  canvas.loadImage(im_src);
+}
+  </script>
+  <style>
+    body {
+      background-color:black;
+      margin:30px;
+      color: #fff;
+    }
+    canvas {
+      margin: 20px;
+      border:1px solid #444;
+    }
+    h2 { font-size: 140%; font-weight:normal; color: #fff; border-bottom: 1px solid #ccc; }
+    pre { float:left; display:block; background: rgb(40,40,40); border: 1px dashed #ccc; padding: 15px 20px; margin: 0 0 10px 0; }
+  </style>
+</head>
+<body>
+    <h2>Example of working with image data</h2>
+    <p>Note: test will not work with local file system</p>
+
+  <table>
+    <tr vAlign="top">
+        <td style="text-align:center;">
+              <div><canvas id="cv1" width="320" height="240"></canvas></div>
+              <div><canvas id="cv2" width="320" height="240"></canvas></div>
+              <div><canvas id="cv3" width="320" height="240"></canvas></div>
+              <div><canvas id="cv4" width="320" height="240"></canvas></div>
+              <div><canvas id="cv5" width="320" height="240"></canvas></div>
+        </td>
+        <td>
+              <pre id="sourceText">
+              </pre>
+        </td>
+    </tr>
+  </table>
+  
+  <script type="text/javascript">
+    var script = document.getElementById("source")
+    if(script.textContent) {
+      document.getElementById("sourceText").textContent = script.textContent;
+    } else {
+      document.getElementById("sourceText").innerText = script.innerHTML;
+    }
+  </script>
+
+</body>
+</html>
+
