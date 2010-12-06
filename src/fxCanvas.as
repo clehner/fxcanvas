@@ -54,6 +54,7 @@ package {
     import flash.utils.getTimer;
     import flash.utils.ByteArray;
     import flash.geom.Rectangle;
+    import flash.events.MouseEvent;
 
     import com.hurlant.util.Base64;
     import com.adobe.images.PNGEncoder;
@@ -185,10 +186,6 @@ package {
         private var canvasId:int, pageId:String,
                     host_addr:String = "";
 
-        // image loader
-        //
-        private var loader:Loader = new Loader();
-
         // cache objects
         private var imageCache:Object = {};
 
@@ -220,6 +217,8 @@ package {
         private var proxy:String;
 
         private var _callStack:Array;
+
+        private var _focus:Boolean = false;
             
         public function fxCanvas() { 
             addEventListener("enterFrame", listen)
@@ -260,6 +259,9 @@ package {
             loader.addEventListener(IOErrorEvent.IO_ERROR, ioErrorHandler);
             */
 
+            //stage.removeEventListener(MouseEvent.MOUSE_MOVE, mouseMoveHandler);
+            //stage.removeEventListener(MouseEvent.MOUSE_DOWN, mouseDownHandler);
+
             var args:Array = root.loaderInfo.parameters.c.split(argEnd);
             _width = parseInt(args[0]);
             _height = parseInt(args[1]);
@@ -277,6 +279,14 @@ package {
             //log("d:"lc.domain)
 
             init(_width, _height);
+        }
+
+        private function mouseMoveHandler(event:MouseEvent):void {
+            _focus = true;
+        }
+
+        private function mouseDownHandler(event:MouseEvent):void {
+            _focus = true;
         }
         
         private function getCanvasUUID(elId:int = -1):String {
@@ -322,8 +332,11 @@ package {
             if (_exception) {
                 send(com.except, _exception);
                 _exception = null;
+            //} else if (_focus) {
+                //send('focus', '');
+                //_focus = false;
             } else if (_queue.length) {
-                var _data:Array = _queue.pop();
+                var _data:Array = _queue.shift();
                 send(_data[0], _data[1]);
             } else if (_event) {
                 _width = newWidth
@@ -564,6 +577,8 @@ package {
             var src:String = getString();
             var queueId:int = (args.length) ? args[0] : -1;  
 
+            var loader:Loader = new Loader();
+
             if(_type == 0) {// image
                 loader.contentLoaderInfo.addEventListener(Event.COMPLETE, __complete(imageId, queueId));
                 // src is image encoded in base64
@@ -598,7 +613,8 @@ package {
                 "width": 0,
                 "height": 0,
                 "contentType": "",
-                "url": ""
+                "url": "",
+                "loader": loader
             }
 
             //log("_loadImage("+[_type, queueId, elementId, src, "..."]+")")
@@ -736,15 +752,15 @@ package {
 
                 var img:Object = imageCache[imageId];
                 img.loaded = true;
-                img.bitmapData = Bitmap(loader.content).bitmapData;
+                img.bitmapData = Bitmap(img.loader.content).bitmapData;
                 img.width = loaderInfo.width;
                 img.height = loaderInfo.height;
                 img.contentType = loaderInfo.contentType;
                 img.url = loaderInfo.url;
 
-                // release memory
+                // release the memory
                 //
-                loader.unload();
+                img.loader.unload();
 
                 // For security reasons, I'll check image type 
                 // for not allow load flash clips.
@@ -759,10 +775,12 @@ package {
                 }
 
                 if(queueId > -1)
-                    _queue.push([
+                    _queue[queueId] = [
                         queueId,
                         [img.contentType, img.width, img.height, img.url].join(argEnd)
-                    ]);
+                    ];
+
+                //log([queueId, img.width, img.height, img.url])
             }
         }
 

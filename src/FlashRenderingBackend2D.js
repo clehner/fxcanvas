@@ -6,12 +6,12 @@
  */
 
 /*
-   In Internet Explorer is used FlashVars as buffer for commands.
+   In Internet Explorer is used FlashVars property of the flash object as command buffer.
 
    The trick is to using fscommand() for queries and FlashVars as command buffer 
    instead of ExternalInterface. This required less cpu power to make 
    asynchronous javascript-flash bridge.
-   On another hand you should use wrapper ctx.invoke() for getting values from flash
+   As of down side you should use wrapper ctx.invoke() for getting values from flash
    (e.g. CanvasPixelArray or TextMetrics).
    Note: trick works in IE only.
 */
@@ -73,6 +73,8 @@ $Unit(__PATH__, __FILE__, function(unit, root, glob){
 
         // Assets loaders
         //
+        // fixme sometime onload event is not triggered by unknown reasons when 
+        // images are loaded from URL (test: 3_4_canvas_gallery)
         "loadImage" : function() {
           if (!arguments.length) return;
 
@@ -107,8 +109,11 @@ $Unit(__PATH__, __FILE__, function(unit, root, glob){
 
           //trace("loadImage()", type, src)
 
+          // fixme _sync method is buggy! make out something better!
+          //
           // sync image among all canvas instances
           // todo fire onload when all canvases will ready 
+          /*
           function _sync(type, image) {
             for(var i=0; i<window.__canvasElement.length; i++)
               if(window.__canvasElement[i] != canvas)
@@ -116,6 +121,7 @@ $Unit(__PATH__, __FILE__, function(unit, root, glob){
                       .getBackend("2d")
                       ._loadImage(type, image);
           }
+          */
 
           // if image is canvas or video element
           if (isDataURI || type == 1) {
@@ -136,12 +142,12 @@ $Unit(__PATH__, __FILE__, function(unit, root, glob){
 
             }]);
           }
-          // if static image
+          // if URL image
           else {
             image.onload = function () {
               backend._invoke(["_loadImage", type, image, function(data)
               {
-                _sync(type, image)
+                //_sync(type, image)
 
                 if (typeof canvas.onload == "function") {
                   canvas.onload(image);
@@ -276,8 +282,9 @@ $Unit(__PATH__, __FILE__, function(unit, root, glob){
       //
 
       this["_resize"] = function(newWidth, newHeight) {
+        //trace('_resize', newWidth, newHeight)
         this._stack[this._stack.length] = [
-          com_resize, newWidth, newHeight, ""
+          com_resize, parseInt(newWidth), parseInt(newHeight), ""
         ].join(argEnd)
       };
 
@@ -1167,7 +1174,7 @@ $Unit(__PATH__, __FILE__, function(unit, root, glob){
       // it will added in script 
       //
       canvas.onload = params.onload;
-      canvas.onframe = params.onframe;
+      canvas.oncanvasframe = params.oncanvasframe;
 
       // initialize external/extended canvas context
       var ext = canvas.__fx_context_2d = new unit.extCanvasRenderingContext2D(canvas, null);
@@ -1215,13 +1222,14 @@ $Unit(__PATH__, __FILE__, function(unit, root, glob){
         {
           unit.throwError(this._data.args)
         } 
+        //else if (cmd == 'focus') { }
         else
           unit.throwError("Unknown command " + cmd)
 
         // todo rendering time
         var drawTime = 0
         // call frame handler if there is one
-        if (this.onframe) this.onframe(drawTime)
+        if (this.oncanvasframe) this.oncanvasframe(drawTime)
 
         backend._onframe();
       };
@@ -1269,7 +1277,7 @@ $Unit(__PATH__, __FILE__, function(unit, root, glob){
 
       var flobject = ['<object classid="clsid:d27cdb6e-ae6d-11cf-96b8-444553540000"',
         '  width="',width,'" height="',height,'" id="__fx_canvas_',canvasID,'">',
-        '<param name="allowScriptAccess" value="sameDomain">',
+        '<param name="allowScriptAccess" value="always">',
         '<param name="movie" value="',swf_url,'">',
         '<param name="quality" value="high">',
         '<param name="menu" value="false">',
@@ -1307,6 +1315,10 @@ $Unit(__PATH__, __FILE__, function(unit, root, glob){
       else
         canvas.contextMenu = null
 
+      // cursor style should be changed on flash element,
+      // set canvas.style.cursor will not giving any effect
+      flashObject.style.cursor = 'default'
+
       // freeing (right-) click event on canvas and get rid of 
       // flashes context menu 
       //
@@ -1318,22 +1330,44 @@ $Unit(__PATH__, __FILE__, function(unit, root, glob){
       canvas._onMouseDown = function (evt) {
         flashObject.focus();
       };
-      canvas._onCanvasEnter = function(evt) { 
-        if(!canvas.contextMenu) return
+      canvas._onCanvasEnter = function() { 
+        //trace('enter canvas')
+        flashObject.style.cursor = canvas.style.cursor
         canvas.setCapture(true);
+        //canvas._captured = true
+        if(!canvas.contextMenu) return
         document.attachEvent("oncontextmenu", canvas._onContextMenu);
         document.attachEvent("onmousedown", canvas._onMouseDown);
       };
-      canvas._onCanvasLeave = function(evt) { 
-        if(!canvas.contextMenu) return
+      canvas._onCanvasLeave = function() { 
+        //trace('leave canvas')
+        flashObject.style.cursor = 'none'
         canvas.releaseCapture(); 
+        //canvas._captured = false
+        if(!canvas.contextMenu) return
         document.detachEvent("oncontextmenu", canvas._onContextMenu);
         document.detachEvent("onmousedown", canvas._onMouseDown);
       };
 
+      /*
+      function onDocumentEnter () {
+        trace('enter document')
+        if(canvas._captured)
+          canvas._onCanvasEnter()
+      }
+
+      function onDocumentLeave () {
+        trace('leave document')
+        if(canvas._captured)
+          canvas._onCanvasLeave()
+      }
+
+      document.attachEvent("onfocusin", onDocumentEnter)
+      document.attachEvent("onfocusout", onDocumentLeave)
+      */
+
       canvas.attachEvent("onmouseenter", canvas._onCanvasEnter);
       canvas.attachEvent("onmouseleave", canvas._onCanvasLeave);
-      // todo canvas.style.cursor (maybe via transparent image on top on the canvas?)
 
       // do not use inline function because that will leak memory
       canvas.attachEvent("onpropertychange", unit.onPropertyChange);
@@ -1343,6 +1377,7 @@ $Unit(__PATH__, __FILE__, function(unit, root, glob){
     };
 
     var resizeCanvas = function(canvas) {
+      //trace('resizeCanvas()', canvas.width, canvas.height)
       var backend = canvas.getBackend("2d"); 
       backend._resize(canvas.width, canvas.height);
     }
@@ -1353,6 +1388,7 @@ $Unit(__PATH__, __FILE__, function(unit, root, glob){
         case "width": 
         case "height": 
         case "frameDuration": 
+        case "style.cursor":
           canvas = event.srcElement; 
           backend = canvas.getBackend("2d"); 
       }
@@ -1368,14 +1404,17 @@ $Unit(__PATH__, __FILE__, function(unit, root, glob){
 
         var w = parseInt(canvas.style.width), 
             h = parseInt(canvas.style.height);
-        // call resize by interval to handle both values
+        // call resizeCanvas() by interval to handle both width and height
         clearTimeout(canvas._resizeIntId)
+        //trace('onPropertyChange()', prop, value)
         canvas._resizeIntId = setTimeout(function(){
             resizeCanvas(canvas)
-        }, 100)
+        }, 1)
       } else if (prop === "frameDuration") {
         var dur = Math.abs(parseInt(canvas.frameDuration));
         backend._frameDuration = dur;
+      } else if (prop === "style.cursor") {
+        backend._flobject.style.cursor = canvas.style.cursor
       }
     };
 

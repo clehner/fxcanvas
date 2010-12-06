@@ -60,7 +60,7 @@ $Unit(__PATH__, __FILE__, function(unit, root, glob){
     group.getCanvasParams = function(canvas) {
       var _width = canvas.getAttribute("width"),
           _height = canvas.getAttribute("height"),
-          _onframe = canvas.getAttribute("onframe"),
+          _onframe = canvas.getAttribute("oncanvasframe"),
           _onload = canvas.getAttribute("onload"),
           _tracePathBounds = canvas.getAttribute("tracePathBounds"),
           _frameDuration = canvas.getAttribute("frameDuration");

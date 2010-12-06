@@ -45,14 +45,12 @@ $Unit(__PATH__, __FILE__, function(unit, root, glob){
         else 
           _data = this[cmd].apply(this, args);
 
-        setTimeout(dataHandler, this._frameDuration, _data);
+        setTimeout(dataHandler, this.canvas.__frameDuration, _data);
       },
 
       "dummy" : function () {
         // dummy
       },
-
-      "_frameDuration" : unit.config.frameDuration,
 
       "appendPath" : function(_path) {
         for(var i=0; i<_path._stack.length; i++) {
@@ -92,7 +90,7 @@ $Unit(__PATH__, __FILE__, function(unit, root, glob){
             data = this.__native_toDataURL.apply(this, args),
             canvas = this;
 
-        setTimeout(dataHandler, this.frameDuration, data);
+        setTimeout(dataHandler, this.__frameDuration, data);
 
         return null;
       };
@@ -126,39 +124,39 @@ $Unit(__PATH__, __FILE__, function(unit, root, glob){
       };
 
       canvas.__defineSetter__("frameDuration", function(dur) {
-        this.getBackend("2d")._frameDuration = Math.abs(parseInt(dur));
+        this.__frameDuration = Math.abs(parseInt(dur));
         // restart frame loop
-        this.onframe = this.__onFrame;
+        this.oncanvasframe = this.__onFrame;
       });
       canvas.__defineGetter__("frameDuration", function() {
-        return this.getBackend("2d")._frameDuration;
+        return this.__frameDuration;
       });
       canvas.__defineSetter__("tracePathBounds", function(val) {
-        this.getContext("2d")._tracePathBounds = val;
+        this.__tracePathBounds = val;
       });
       canvas.__defineGetter__("tracePathBounds", function() {
-        return this.getContext("2d")._tracePathBounds;
+        return this.__tracePathBounds;
       });
 
       // frame loop controls
       //
       canvas.__onFrame = canvas.__frameIntId = null;
-      canvas.__defineSetter__("onframe", function(onframe) {
+      canvas.__defineSetter__("oncanvasframe", function(oncanvasframe) {
         clearInterval(this.__frameIntId);
-        if (!onframe) {
+        if (!oncanvasframe) {
           this.__onFrame = null;
         } else {
-          this.__onFrame = onframe;
-          this.__frameIntId = setInterval(this.__onFrame, this.frameDuration);
+          this.__onFrame = oncanvasframe;
+          this.__frameIntId = setInterval(this.__onFrame, this.__frameDuration, 0);
         }
       });
-      canvas.__defineGetter__("onframe", function() {
+      canvas.__defineGetter__("oncanvasframe", function() {
         return this.__onFrame;
       });
 
       // default event handlers
       canvas.onload = null;
-      canvas.onframe = null;
+      canvas.oncanvasframe = null;
 
       canvas.getBackend = function(backendId){
         return this.__native_getContext(backendId);
@@ -218,8 +216,8 @@ $Unit(__PATH__, __FILE__, function(unit, root, glob){
         canvas.tracePathBounds = params.tracePathBounds;
       if(params.onload) 
         canvas.onload = params.onload;
-      if(params.onframe) 
-        canvas.onframe = params.onframe;
+      if(params.oncanvasframe) 
+        canvas.oncanvasframe = params.oncanvasframe;
 
       window.__canvasElement[unit.lastCanvasID++] = canvas;
     };

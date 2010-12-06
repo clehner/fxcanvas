@@ -17,6 +17,7 @@
         var canvas = document.createElement("canvas")
         canvas.setAttribute("width", canvasWidth)
         canvas.setAttribute("height", canvasHeight)
+        canvas.setAttribute("frameDuration", 700)
         canvas.style.top = ((canvasWidth/2)) + "px"
         canvas.style.left = ((canvasHeight/2)) + "px"
         document.body.appendChild(canvas)
@@ -37,8 +38,8 @@
               .fillRect(0,0,canvas.width,canvas.height)
               .setFillStyle("#000")
         }
-        var intId = setInterval(draw, 700);
-        draw()
+        //var intId = setInterval(draw, 700);
+        canvas.oncanvasframe = draw
       };
   </script>
   <style>

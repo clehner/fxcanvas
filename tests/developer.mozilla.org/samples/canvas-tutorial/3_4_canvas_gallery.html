@@ -18,16 +18,18 @@
         
               // Create canvas element
               canvas = document.createElement('CANVAS');
-              canvas.setAttribute('width',132);
-              canvas.setAttribute('height',150);
+              //canvas.setAttribute('width',132);
+              //canvas.setAttribute('height',150);
+              canvas.width = 132
+              canvas.height = 150
         
               // Insert before the image
               document.images[i].parentNode.insertBefore(canvas,document.images[i]);
         
-              //if (typeof FlashCanvas != "undefined") FlashCanvas.initElement(canvas);
               ctx = canvas.getContext('2d');
         
               ctx.canvas.onload = function drawPicture (pic) {
+
                 this.loadedPictures += 1
 
                 if (pic.src.indexOf("picture_frame.png") > -1)
@@ -41,15 +43,17 @@
 
                 var ctx = this.getContext("2d")
 
-                // Draw image to canvas
+                // Draw image on canvas
                 ctx.drawImage(this.picture, 15, 20);
           
                 // Add frame
                 ctx.drawImage(this.frame, 0, 0);
               }
 
+              ctx.canvas.img = i
               ctx.canvas.loadedPictures = 0
-              ctx.canvas.loadImage(document.images[i], document.getElementById('frame'))
+              ctx.canvas.loadImage(document.images[i])
+              ctx.canvas.loadImage(document.getElementById('frame'))
             }
           }
         }

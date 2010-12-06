@@ -15,7 +15,9 @@
 
       cv.onload = function (img_) {
         img = img_;
-        l();
+        // there is the fix:
+        // use oncanvasframe frame instead of setInterval
+        cv.oncanvasframe = l;
       };
       cv.loadImage(src)
     }
@@ -53,7 +55,6 @@
       ctx.fill();
       ctx.restore();
 
-      setTimeout(l, 50);
     }
   </script>
   <style>
@@ -63,6 +64,6 @@
   </style>
 </head>
 <body onload="a();">
-<canvas id="aa" width="200" height="200">Fallback <b>content</b> markup</canvas>
+<canvas id="aa" width="200" height="200" frameDuration="50">Fallback <b>content</b> markup</canvas>
 </body>
 </html>

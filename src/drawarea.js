@@ -344,7 +344,7 @@ $Unit(__PATH__, __FILE__, function(unit)
         }, false);
 
         // run the main drawing in frame loop to avoid browser hang ups
-        canvas.onframe = function () {
+        canvas.oncanvasframe = function () {
             if (!changed) return;
             draw(mouse);
             drawControlPoints()

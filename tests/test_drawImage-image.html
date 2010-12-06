@@ -14,8 +14,8 @@
           var a = 1;
 
           if (img.src.indexOf(bg_src) > -1) {
-            canvas.onframe = function () {
-              if (a < .1) canvas.onframe=null;
+            canvas.oncanvasframe = function () {
+              if (a < .1) canvas.oncanvasframe=null;
               ctx.fillStyle = "rgba(0,0,0,"+a+")";
               ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
               ctx.fillRect(0, 0, canvas.width, canvas.height);

@@ -1,6 +1,6 @@
 Project  = fxCanvas
 projURL  = http://code.google.com/p/fxcanvas/
-Version  = 0.2(beta1)
+Version  = 0.2(beta2)
 Codename = supersonic
 Date     = $(shell date '+%Y%m%d')
 Year     = $(shell date '+%Y')
@@ -11,6 +11,7 @@ header   = $(Project) v$(Version) ($(Date))
 srcdir   = src
 bindir   = .
 demodir  = demo
+archives = archives
 fxcanvas_as = $(srcdir)/fxCanvas.as
 jooscript_js   = $(bindir)/jooscript.js
 fxcanvas_js = $(bindir)/fxcanvas.js
@@ -63,11 +64,11 @@ $(canvas_backend_js): $(canvas_backend)
 	java -jar $(compiler) $(addprefix --js ,$(canvas_backend)) >> $(canvas_backend_js)
 
 zip:
-	rm -rf "fxcanvas-$(Version)-$(Codename).zip"
-	zip -r "fxcanvas-$(Version)-$(Codename).zip" \
+	rm -rf "$(archives)/fxcanvas-$(Version)-$(Codename).zip"
+	zip -r "$(archives)/fxcanvas-$(Version)-$(Codename).zip" \
 		src demo docs tests \
 		-i "*.js" "*.as" "*.swf" "*.jpg" "*.gif" "*.png" "*.htm?" "*.css" "*.php" README -x "demo/cakejs*"
-	zip -r "fxcanvas-$(Version)-$(Codename).zip" $(fxcanvas_swf) $(jooscript_js) $(fxcanvas_js) $(flash_backend_js) $(canvas_backend_js) ReadMe.html Makefile debug.php save.php view.php proxy.php
+	zip -r "$(archives)/fxcanvas-$(Version)-$(Codename).zip" $(fxcanvas_swf) $(jooscript_js) $(fxcanvas_js) $(flash_backend_js) $(canvas_backend_js) ReadMe.html Makefile debug.php save.php view.php proxy.php
 
 cake:
 	# CAKE does not included in archive due to big size of it. 

@@ -100,6 +100,7 @@ onload = function () {
     }
     h2 { font-size: 140%; font-weight:normal; color: #fff; border-bottom: 1px solid #ccc; }
     pre { float:left; display:block; background: rgb(40,40,40); border: 1px dashed #ccc; padding: 15px 20px; margin: 0 0 10px 0; }
+    p {padding: 0; margin: 0;}
   </style>
 </head>
 <body>
@@ -110,10 +111,15 @@ onload = function () {
     <tr vAlign="top">
         <td style="text-align:center;">
               <div><canvas id="cv1" width="320" height="240"></canvas></div>
+              <p>Source image</p>
               <div><canvas id="cv2" width="320" height="240"></canvas></div>
+              <p>Mixed color channels</p>
               <div><canvas id="cv3" width="320" height="240"></canvas></div>
+              <p>Previous canvas element as source image</p>
               <div><canvas id="cv4" width="320" height="240"></canvas></div>
+              <p>PNG data URI as source image</p>
               <div><canvas id="cv5" width="320" height="240"></canvas></div>
+              <p>JPEG data URI as source image</p>
         </td>
         <td>
               <pre id="sourceText">

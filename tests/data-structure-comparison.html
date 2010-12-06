@@ -24,7 +24,7 @@
             onload = function () {
                 var width = 1000;
                 var height = 1000;
-                if ( location.href.match(/\?canvas/) )
+                if ( location.href.match(/\?default/) )
                     test_canvas_data(width, height);
                 else if ( location.href.match(/\?compact/) )
                     test_compact_data(width, height);
@@ -86,23 +86,23 @@
 
         </script>
         <h2>Comparison of image data structures</h2>
-        <button onclick="location.replace(location.href.replace(/\?[a-z]+/, '') + '?canvas')">make canvas data</button>
-        <button onclick="location.replace(location.href.replace(/\?[a-z]+/, '') + '?compact')">make compact data</button>
-        <p>Image size is 1000x1000 pixels.</p>
+        <button onclick="location.replace(location.href.replace(/\?[a-z]+/, '') + '?default')">make default data</button>
+        <button onclick="location.replace(location.href.replace(/\?[a-z]+/, '') + '?compact')">make "compact" data</button>
+        <p>Image size is 1000x1000.</p>
         <p>This test will create arrays with different image data structures. First as is declared in Canvas spec (array element is an color channel), second is slightly different: element is pixel encoded in 32-bit integer. </p>
-        <p>In IE are using quiet inefficient memory manager so we can face a problems if trying to using default image data. So as compromise I change data format. With a compact format, memory consumption makes half or third of a standard, as a result loops takes less time. For technical details see page source.</p>
+        <p>In IE is using quiet inefficient memory manager so we can face a problems if trying to using default image data. So as compromise I change data format. With a "compact" format, memory consumption makes half or third of a standard, as a result loops takes less time. For technical details see page source.</p>
         <p>For running test, open task manager and push one of buttons above.</p>
         <p>
             Here is my results (WinXP, Internet Explorer 8):<br/>
             <li>default data: 4687 ms</li>
             <div><img src="res-taskman-default.png" /></div>
             <p></p>
-            <li>compact data: 2513 ms</li>
+            <li>"compact" data: 2513 ms</li>
             <p></p>
             <div><img src="res-taskman-compact.png" /></div>
             <p></p>
-            <p>On average, algorithms that use compact data must be faster in about 2-3 times versus standard image array.</p>
-            <p>In conclusion I must say that I realize that main idea of Canvas image data array was simplicity, but in this case it seems simplicity is evil, not good.</p>
+            <p>On average, algorithms that use "compact" data must be faster in about 2-3 times versus standard image array.</p>
+            <p>Note that this problem is local for Enternet Explorer, in some another browsers are used fast <a href="https://cvs.khronos.org/svn/repos/registry/trunk/public/webgl/doc/spec/TypedArray-spec.html">typed arrays.</a> The perfomance gain for "compact" data in Firefox is only 30%.</p>
         </p>
 	</body>
 </html>

@@ -59,7 +59,7 @@
       ctx.lineWidth = "1";
       ctx.strokeStyle = "rgb(255, 255, 255)";
 
-      canvas.onframe = function() {
+      canvas.oncanvasframe = function() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         var start = new Date().getTime();
         
@@ -94,7 +94,7 @@
 	</style>
 </head>
 <body>
-	<canvas id="cv" width="400" height="300" frameDuration="600"></canvas>
+	<canvas id="cv" width="400" height="300" frameDuration="100"></canvas>
 	<p id="debug"></p>
 </body>
 </html>
