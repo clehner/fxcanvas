@@ -237,6 +237,7 @@ $Unit(__PATH__, __FILE__, function(unit)
             .fill();
 
         drawBoundingBox(mouse);
+
         ctx.restore();
     }
 
@@ -264,6 +265,7 @@ $Unit(__PATH__, __FILE__, function(unit)
         var mouseDown = true;
         canvas = document.getElementById("drawarea");
         ctx = canvas.getContext("2d");
+        ctx._tracePathBounds = true
         canvas.translate = function (tx, ty) {
           transform.tx = tx
           transform.ty = ty

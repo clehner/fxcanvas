@@ -2,9 +2,8 @@
 <html>
 <head>
   <title>drawarea</title>
-    <script type="text/javascript" src="../jooscript.js"></script><script type="text/javascript" src="../fxcanvas.js"></script><!--[if IE]><script type="text/javascript" src="../flash_backend.js"></script><![endif]--><comment><script type="text/javascript" src="../canvas_backend.js"></script></comment>
-    <!--<script type="text/javascript" src="../libs/jooscript-basics.git/debug.php"></script>-->
-    <!--<script type="text/javascript" src="../debug.php"></script>-->
+    <script type="text/javascript" src="../libs/jooscript-basics.git/debug.php"></script>
+    <script type="text/javascript" src="../debug.php"></script>
   <style>
     body {
       background-color:black;
@@ -68,7 +67,7 @@
     <button id="arcTo_2">arcTo</button>
     <button id="arc_2">arc</button>
     <button id="rect_2">rect</button>
-    translate: <input type="text" id="translate_x" value="0" onkeyup="transform_();"/>, <input type="text" id="translate_y" value="0" onkeyup="transform_();"/>
+    translate: <input type="number" id="translate_x" value="0" onkeyup="transform_();"/>, <input type="number" id="translate_y" value="0" onkeyup="transform_();"/>
     rotate: <input type="text" id="rotate" value="0" onkeyup="transform_();"/>
     scale: <input type="text" id="scale" value="1" onkeyup="transform_();"/>
   </div>
