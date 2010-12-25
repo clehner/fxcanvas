@@ -32,6 +32,7 @@ package {
     import flash.display.StageScaleMode;
     import flash.display.MovieClip;
     import flash.display.Sprite;
+    import flash.display.Shape;
     import flash.system.fscommand;
     import flash.events.*;
     import flash.text.TextField;
@@ -52,6 +53,8 @@ package {
     import flash.display.BitmapData;
     import flash.display.Bitmap;
     import flash.utils.getTimer;
+    import flash.utils.setInterval;
+    import flash.utils.clearInterval;
     import flash.utils.ByteArray;
     import flash.geom.Rectangle;
     import flash.events.MouseEvent;
@@ -202,6 +205,7 @@ package {
         private var _width:int = 300, _height:int = 150;
         // new size
         private var newWidth:int, newHeight:int;
+        private var stageWidth:int, stageHeight:int;
 
         // timeout may be more than 1000ms, in this case set frameRate=1000 
         // (one frame per microsec) and send onframe event when time is out
@@ -219,6 +223,10 @@ package {
         private var _callStack:Array;
 
         private var _focus:Boolean = false;
+
+        private var scaleWidth:Number;
+        private var scaleHeight:Number;
+        private var scaleMatrix:Matrix;
             
         public function fxCanvas() { 
             addEventListener("enterFrame", listen)
@@ -231,6 +239,9 @@ package {
 
             stage.scaleMode = StageScaleMode.NO_SCALE;
             stage.align     = StageAlign.TOP_LEFT;
+
+            // Canvas may be resized with distorted proportions
+            stage.addEventListener(Event.RESIZE, resizeHandler);
 
             for (var c:String in com) {
                 cmdName[com[c]] = c
@@ -263,20 +274,25 @@ package {
             //stage.removeEventListener(MouseEvent.MOUSE_DOWN, mouseDownHandler);
 
             var args:Array = root.loaderInfo.parameters.c.split(argEnd);
-            _width = parseInt(args[0]);
-            _height = parseInt(args[1]);
-            __setFrameRate(uint(parseInt(args[2])));
-            canvasId = parseInt(args[3]);
-            pageId = args[4];
-            host_addr = args[5];
-            viewImageUrl = args[6];
-            saveAsUrl = args[7];
-            proxy = args[8];
+            //log(args)
+            newWidth = _width = parseInt(args[0]);
+            newHeight = _height = parseInt(args[1]);
+            stageWidth = parseInt(args[2])
+            stageHeight = parseInt(args[3])
+            __setFrameRate(parseInt(args[4]));
+            canvasId = parseInt(args[5]);
+            pageId = args[6];
+            host_addr = args[7];
+            viewImageUrl = args[8];
+            saveAsUrl = args[9];
+            proxy = args[10];
 
             var lc_id:String = getCanvasUUID();
             lc.connect(lc_id)
             //log("id:"+lc_id)
             //log("d:"lc.domain)
+
+            //log([_width, _width].join("x"))
 
             init(_width, _height);
         }
@@ -287,6 +303,18 @@ package {
 
         private function mouseDownHandler(event:MouseEvent):void {
             _focus = true;
+        }
+
+        private function resizeHandler(event:Event, stageWidth:int = -1, stageHeight:int = -1):void {
+            stageWidth = (stageWidth > 0 ? stageWidth : stage.stageWidth)
+            stageHeight = (stageHeight > 0 ? stageHeight : stage.stageHeight)
+            scaleWidth = stageWidth/newWidth
+            scaleHeight = stageHeight/newHeight
+
+            if(scaleWidth < 0.01 || scaleHeight < 0.01) return;
+            scaleMatrix = new Matrix(scaleWidth, 0, 0, scaleHeight);
+            transform.matrix = scaleMatrix
+            //log([newWidth, newHeight, stageWidth, stageHeight, "@", scaleWidth, scaleHeight, ])
         }
         
         private function getCanvasUUID(elId:int = -1):String {
@@ -312,8 +340,14 @@ package {
             } catch(e:*){
                 _exception = "init(): " + e
             }
-            spr.addChild(canvas);
             stage.frameRate = workFrameRate;
+
+            resizeHandler(null, stageWidth, stageHeight)
+            stage.stageWidth = stageWidth
+            stage.stageHeight = stageHeight
+
+            spr.addChild(canvas);
+            
             //log([canvasId, [width, height].join("x"), stage.frameRate + "fps"].join(", ") )
         }
 
@@ -356,6 +390,7 @@ package {
                 return
             }
 
+
             wakeUp();
 
             bufLen = parseInt(buf.l)
@@ -363,10 +398,10 @@ package {
             //_callStack = []
 
             try {
-                draw();
+                _draw();
             } catch (e:*) {
+                //log("error: " + e)
                 _exception = e.toString() //+ "\n" + buf.c //+ "\n" + _callStack ; 
-                //log(e + "")
                 //log(e.getStackTrace())
             }
         }
@@ -399,7 +434,7 @@ package {
             fscommand(cmd, args);
         }
 
-        private function draw():void
+        private function _draw():void
         {
             if (bufLen) {
                 //log("" + [bufLen, buf.c])
@@ -409,6 +444,7 @@ package {
                 while(bufLen)
                     unserializeCommands(0);
             }
+
         }
 
         private function unserializeCommands(i:uint):void
@@ -416,7 +452,7 @@ package {
             _applyCmd()
 
             // prevent stack overflow exception
-            if (bufLen && i < 300)
+            if (bufLen && i < 1000)
                 unserializeCommands(i+1)
         }
 
@@ -617,7 +653,7 @@ package {
                 "loader": loader
             }
 
-            //log("_loadImage("+[_type, queueId, elementId, src, "..."]+")")
+            //log("_loadImage("+[_type, queueId, imageId, elementId, src, "..."]+")")
         }
 
         // ==================================
@@ -648,15 +684,6 @@ package {
 
             _dataChunks = null
             //log("_putImageData(" + [imageId, queueId, "..."] + ")")
-        }
-
-        // ===================
-        public function test(elementId:String, imageId:int, queueId:int):void {
-            log("test(" + [elementId, imageId, queueId] + ")")
-        }
-
-        public function testa(imageId:int, queueId:int, canvasWidth:int, canvasHeight:int, imageData:String):void {
-            log("testa(" + [imageId, queueId, canvasWidth, canvasHeight, imageData] + ")")
         }
 
         // fixme concurrent writes
@@ -1033,9 +1060,12 @@ package {
                 _exception = "Unexpected canvas size " + [newWidth, newHeight].join("x")
                 return
             }
-            //log("resize(" + [newWidth,newHeight].join(",") + ")")
-            ctx.resize(newWidth, newHeight);
-            _event = CanvasEvent.RESIZE
+            //log("resize(" + [newWidth,newHeight].join(",") + "), " + [_width, _height])
+            if(newHeight != _width || newHeight != _height){
+                ctx.resize(newWidth, newHeight);
+                _event = CanvasEvent.RESIZE
+            }
+            resizeHandler(null)
         }
 
         private function endQueue():void {
@@ -1210,34 +1240,26 @@ package {
             return str;
         }
 
+        private function getNumber():String
+        {
+            //123456789012345678901234...
+            //1.2679600852380507e+30
+            var num:String = buf.c.substring(bufCursor, buf.c.indexOf(argEnd, bufCursor))
+            bufCursor = bufCursor + num.length;
+            getArgEnd();
+            return num;
+        }
+
         private function getInt():Number
         {
-            var x:int = parseInt(getNumber("", false));
-            getArgEnd();
+            var x:int = parseInt(getNumber());
             return x;
         }
 
         private function getFloat():Number
         {
-            var x:Number = parseFloat(getNumber("", true));
-            getArgEnd();
+            var x:Number = parseFloat(getNumber());
             return x;
-        }
-
-        private function getNumber(s:String, isFloat:Boolean):String
-        {
-            var i:uint = bufCursor + 1
-            var c:int = buf.c.charCodeAt(i)
-            // float: [0-9], ".", "e", "-"
-            if (isFloat && ((c >= 48 && c <= 57) || c == 46 || c == 101 || c == 45)) {
-                return getNumber(s + getNextChar(), isFloat)
-            } else if (!isFloat && c >= 48 && c <= 57) {
-                return getNumber(s + getNextChar(), isFloat)
-            } else {
-                var h:String = getChar()
-                bufCursor++
-                return s + h
-            }
         }
 
         private function getArgEnd():void {
@@ -1259,7 +1281,7 @@ package {
         private function getData(len:Number):String
         {
             var data:String = buf.c.substring(bufCursor, bufCursor + len);
-            bufCursor += len;
+            bufCursor += len + 1;
             return data;
         }
 

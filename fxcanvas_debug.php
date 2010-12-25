@@ -23,7 +23,8 @@ if($isIE) {
 }
 
 foreach($js_src as $js) {
-  $macro = array("__PATH__", "__FILE__");
-  $replace = array("'" . $src . "'", "'$js'");
-  echo str_replace($macro, $replace, file_get_contents("$src/$js"));
+  $macro = array("__PATH__", "__FILE__", "$(fxcanvas_js)");
+  $replace = array("'" . $src . "'", "'$js'", basename(__FILE__));
+  $content = file_get_contents("$src/$js");
+  echo str_replace($macro, $replace, $content);
 }

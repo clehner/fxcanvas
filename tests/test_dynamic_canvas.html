@@ -4,10 +4,11 @@
   <title>test dynamically created canvas</title>
     
     <script type="text/javascript" src="../jooscript.js"></script><script type="text/javascript" src="../fxcanvas.js"></script><!--[if IE]><script type="text/javascript" src="../flash_backend.js"></script><![endif]--><comment><script type="text/javascript" src="../canvas_backend.js"></script></comment>
+
     <script type="text/javascript">
-      $Import(this, "buz.fxcanvas")
+      $Import("buz.fxcanvas")
       // disable automatic extends
-      this.fxcanvas.config.enable = false
+      fxcanvas.config.enable = false
 
       onload = function () {
         var screenWidth = document.documentElement.clientWidth

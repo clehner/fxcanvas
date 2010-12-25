@@ -18,7 +18,6 @@
 $Unit(__PATH__, __FILE__, function(unit, root, glob){
 
   $Import(unit, 
-    "browser",
     "buz.fxcanvas.*", 
     "buz.util.*"
   );
@@ -30,7 +29,7 @@ $Unit(__PATH__, __FILE__, function(unit, root, glob){
 
     // index in __canvasElement array
     unit.lastCanvasID = 0;
-    unit.pageUUID = Math.round(Math.random() * 100000000);
+    unit.pageUUID = (+(new Date)).toString(36);
 
     /***********************************\\//***********************************/ 
     /***************************** // } .IE. { // *****************************/ 
@@ -48,7 +47,7 @@ $Unit(__PATH__, __FILE__, function(unit, root, glob){
           return backendId === "2d" ? this.__fx_context_2d._backend : null;
         },
 
-        // Returns canvas shot in `data:` URI format.
+        // Returns canvas shot in `data` URI format.
         // Note: data URI not supported in IE natively, but it can be drawn on canvas element.
         "toDataURL" : function(type) {
           var args = arguments, 
@@ -93,7 +92,8 @@ $Unit(__PATH__, __FILE__, function(unit, root, glob){
 
           if(tag == "IMG") 
             type = 0, 
-            src = src = typeof arg === "object" ? arg.src : arg,
+            src = typeof arg == "object" ? arg.src : arg,
+            id = typeof arg == "object" ? arg.id : null,
             isDataURI = src.substr(0, 4).toLowerCase() == "data",
             image = isDataURI ? {
                 nodeType:1, 
@@ -108,20 +108,6 @@ $Unit(__PATH__, __FILE__, function(unit, root, glob){
             type = 2;
 
           //trace("loadImage()", type, src)
-
-          // fixme _sync method is buggy! make out something better!
-          //
-          // sync image among all canvas instances
-          // todo fire onload when all canvases will ready 
-          /*
-          function _sync(type, image) {
-            for(var i=0; i<window.__canvasElement.length; i++)
-              if(window.__canvasElement[i] != canvas)
-                window.__canvasElement[i]
-                      .getBackend("2d")
-                      ._loadImage(type, image);
-          }
-          */
 
           // if image is canvas or video element
           if (isDataURI || type == 1) {
@@ -144,11 +130,10 @@ $Unit(__PATH__, __FILE__, function(unit, root, glob){
           }
           // if URL image
           else {
+            if(id) image.id = id
             image.onload = function () {
               backend._invoke(["_loadImage", type, image, function(data)
               {
-                //_sync(type, image)
-
                 if (typeof canvas.onload == "function") {
                   canvas.onload(image);
                 }
@@ -242,7 +227,6 @@ $Unit(__PATH__, __FILE__, function(unit, root, glob){
         com_saveImage = ",",
         com_path      = "/";
 
-    var swf_url = unit.config.script_path + "fxcanvas.swf";
     var swf_version = "9,0,0,0";
 
     var argEnd = "\x01";
@@ -302,7 +286,7 @@ $Unit(__PATH__, __FILE__, function(unit, root, glob){
       };
 
       // idle interval prevent high CPU load in some cases,
-      // it put flash to sleep after some period of inactivity
+      // it puts flash to sleep after some period of inactivity
       //
       var idleId = null;
       this._idle = false;
@@ -344,18 +328,16 @@ $Unit(__PATH__, __FILE__, function(unit, root, glob){
         
         this._flobject.FlashVars = this._buf.join("");
         this._stack = [];
+        this._buf = [];
 
         this._idle = false
         this._writeCount++
       };
 
-      // user activity detected
-      this["_wakeUp"] = function () {
-        if (this._idle)
-          this.dummy();
-      };
-
       this["_clear"] = function () {
+        this._stack = [];
+        this._buf = [];
+        this._flobject = null;
         clearInterval(idleId);
       };
 
@@ -816,6 +798,7 @@ $Unit(__PATH__, __FILE__, function(unit, root, glob){
         this._setLineStyles();
         this._setFontStyles();
 
+        // maxWidth should be Infinity value
         this._stack[this._stack.length] = [
           com_strokeText, text, x, y, maxWidth == undefined ? 0xffffffff : maxWidth, ""
         ].join(argEnd)
@@ -872,16 +855,17 @@ $Unit(__PATH__, __FILE__, function(unit, root, glob){
         // which are dynamic graphics
         var images = this.canvas._images
         if(type == 0)
-          for(var i=0; i<images.length; i++)
-            if(images[i] === image)
-              return; 
-        if(image._imageId == undefined) {
-          image._imageId = this.canvas._images.length;
+          if(image._imageId > -1 && images[image._imageId] === image)
+            return; 
+
+        if(type > 0) { // canvas and video element
+          elementId = image.__id 
         }
-        if(type > 0) // canvas and video element
-          elementId = image.__id
-        else
-          this.canvas._images.push(image);
+
+        // set imageId and add it into images stack
+        image._imageId = images.length;
+        this.canvas._images.push(image);
+
         //trace("_loadImage()", [this.canvas.id, type, elementId, image._imageId,  image.src])
         this._stack[this._stack.length] = [
           com__loadImage,
@@ -925,10 +909,10 @@ $Unit(__PATH__, __FILE__, function(unit, root, glob){
           case "measureText":
             var args = proxy.args.split(argEnd)
             // args is [width, height, ascent, descent]
-            data = new unit._TextMetrics( parseFloat(args[0]), 
-                                          parseFloat(args[1]),
-                                          parseFloat(args[2]),
-                                          parseFloat(args[3]));
+            data = new unit._TextMetrics( Number(args[0]), 
+                                          Number(args[1]),
+                                          Number(args[2]),
+                                          Number(args[3]));
             break;
           case "getImageData":
             // proxy.args must be header(5) + data(width * height * 5)
@@ -942,7 +926,7 @@ $Unit(__PATH__, __FILE__, function(unit, root, glob){
                 height = ((g << 8) + b);
 
             var imageData = new Array(width * height);
-            for (var i=0; i<imageData.length; i+=1) {
+            for (var i=0; i<imageData.length; i++) {
               imageData[i] = this._decodePixel(proxy, 5+(i*5));
             }
             data = new unit.ImageData(width, height, imageData);
@@ -996,7 +980,7 @@ $Unit(__PATH__, __FILE__, function(unit, root, glob){
       "_setTransformMatrix" : function () {
         return // not implemented yet
         this._stack[this._stack.length] = [
-            com_setTransform, this._ext.transformMatrix._dump, ""
+            com_setTransform, this._ext.transformMatrix._dump(), ""
         ].join(argEnd)
       },
 
@@ -1143,18 +1127,30 @@ $Unit(__PATH__, __FILE__, function(unit, root, glob){
     unit.initialize = function() {
       var nodes, canvas;
 
+      unit.swf_url = unit.config.script_path + "fxcanvas.swf";
+
+      // cache SWF data so that object is interactive upon writing
+      var req = new ActiveXObject("Microsoft.XMLHTTP");
+      req.open("GET", unit.swf_url, false);
+      req.send(null);
+
       nodes = document.getElementsByTagName("canvas");
       for (var i=0; i<nodes.length; i++) {
         canvas = nodes[i]
         unit.initElement(canvas)
-        unit.updateObject(canvas, unit._HTMLCanvasElement.prototype);
+        unit.object.extend(canvas, unit._HTMLCanvasElement.prototype);
       }
     };
 
+    var defaultWidth = 300, defaultHeight = 150;
+
     // Init routine splitting into two steps, as canvas attributes 
-    // can be added after createElement() so then it can make
+    // can be added after createElement(), so then it may generate
     // troubles with canvas size
-    unit.initElement = function(canvas, _id, _width, _height) // first step
+    //
+    // This is first step ...
+    //
+    unit.initElement = function(canvas) 
     {
       // exit, if somehow the element was initialized prior to
       if (canvas.getContext) return;
@@ -1164,17 +1160,26 @@ $Unit(__PATH__, __FILE__, function(unit, root, glob){
       __canvasElement[canvasID] = canvas;
       __canvasElement[canvasID].__id = canvasID;
 
-      // initialize flash on the next tick
+      var canvasWidth, canvasHeight;
+
+      // initialize flash object on the next tick
       setTimeout(function(){
-        unit.initFlash(canvas, canvasID, _id, _width, _height)
-      }, 0)
+        unit.initFlash(canvas, canvasID, canvasWidth, canvasHeight)
+      }, 1)
 
       var params = unit.getCanvasParams(canvas);
       // set canvas events handlers from node attributes before 
-      // it will added in script 
+      // it will be added in script 
       //
       canvas.onload = params.onload;
       canvas.oncanvasframe = params.oncanvasframe;
+      canvas.oncanvasresize = params.oncanvasresize;
+      // set implicit size of the canvas or defaults
+      canvas.width = params.width || defaultWidth
+      canvas.height = params.height || defaultHeight
+      if (!params.id) canvas.id = unit.getCanvasUUID();
+
+      canvasWidth = canvas.width, canvasHeight = canvas.height;
 
       // initialize external/extended canvas context
       var ext = canvas.__fx_context_2d = new unit.extCanvasRenderingContext2D(canvas, null);
@@ -1240,32 +1245,42 @@ $Unit(__PATH__, __FILE__, function(unit, root, glob){
     // Second step,
     // this will initialize and add flash object to the canvas container
     //
-    unit.initFlash = function(canvas, canvasID, _id, _width, _height) 
+    unit.initFlash = function(canvas, canvasID, initWidth, initHeight) 
     {
-      var params = unit.getCanvasParams(canvas);
+      width = canvas.width, height = canvas.height
 
-      var defaultWidth = 300, defaultHeight = 150;
+      // set canvas styled width and height prior to, or it will be limited to
+      // the defaults ...
 
-      var width = _width || params.width || defaultWidth;
-      var height = _height || params.height || defaultHeight;
-      canvas.style.width  = width  + "px";
-      canvas.style.height = height + "px";
-      if (!params.id) canvas.id = _id || unit.getCanvasUUID();
+      // Calculate implicit size of the canvas, it may be set in page styles,
+      // and as result canvas  will be distorted.
+      //
+      // todo width and height may be in em's, pt's and so on ...
+      var cur_st = canvas.currentStyle
+      
+      var stageWidth = width, stageHeight = height
 
-      var frameDuration = Math.abs(parseInt(params.frameDuration || unit.config.frameDuration));
+      if(cur_st && cur_st.width != "300px"){
+        stageWidth = parseInt(cur_st.width)
+      }
+      if(cur_st && cur_st.height != "150px"){
+        stageHeight = parseInt(cur_st.height)
+      }
+      
+      var frameDuration = Math.abs(parseInt(canvas.frameDuration || unit.config.frameDuration));
 
       var viewImageURL = unit.config.viewImageURL.substr(0, 4) === "http" ? 
                             unit.config.viewImageURL : unit.config.script_path + unit.config.viewImageURL;
       var saveAsURL = unit.config.saveAsURL.substr(0, 4) === "http" ? 
                         unit.config.saveAsURL : unit.config.script_path + unit.config.saveAsURL;
-      //trace(width, height)
 
-      // note, 100% width and height makes drawing  slowed
-      // todo append canvas fallback where flash is not installed
-      //
+      //trace("initFlash", canvasID, frameDuration, [width, height], cur_st && cur_st.width, cur_st && cur_st.height)
+
       var initVars = [
-            width, 
+            width,
             height, 
+            stageWidth,
+            stageHeight,
             frameDuration,
             canvasID, 
             unit.pageUUID,
@@ -1275,10 +1290,14 @@ $Unit(__PATH__, __FILE__, function(unit, root, glob){
             escapeArgString(unit.config.imageProxy) 
       ].join(argEnd);
 
+      // note, 100% width and height makes drawing  slowed
+      // todo append canvas fallback where flash is not installed
+      //
       var flobject = ['<object classid="clsid:d27cdb6e-ae6d-11cf-96b8-444553540000"',
-        '  width="',width,'" height="',height,'" id="__fx_canvas_',canvasID,'">',
+        '  width="',width,'" height="',height,'"',
+        '  id="__fx_canvas_',canvasID,'">',
         '<param name="allowScriptAccess" value="always">',
-        '<param name="movie" value="',swf_url,'">',
+        '<param name="movie" value="',unit.swf_url,'">',
         '<param name="quality" value="high">',
         '<param name="menu" value="false">',
         '<param name="wmode" value="transparent">',
@@ -1293,6 +1312,19 @@ $Unit(__PATH__, __FILE__, function(unit, root, glob){
       canvas.innerHTML = flobject;
       var flashObject = canvas.firstChild;
 
+      if(cur_st && cur_st.width != "300px"){
+        flashObject.style.width = cur_st.width;
+      }
+      if(cur_st && cur_st.height != "150px"){
+        flashObject.style.height = cur_st.height;
+      }
+
+      // call oncanvasresize if current dim deffer from inits
+      if(initWidth != width || initHeight != height) {
+        if(canvas.oncanvasresize)
+          canvas.oncanvasresize()
+      }
+
       // setup backend
       canvas.getBackend("2d")._setup(flashObject, frameDuration)
 
@@ -1304,11 +1336,9 @@ $Unit(__PATH__, __FILE__, function(unit, root, glob){
           canvas.getBackend("2d")._saveImage();
         },
         "about" : function () {
-          location.replace(unit.config.projectURL);
+          window.location = unit.config.projectURL;
         }
       };
-
-      // fixme canvas cursor style
 
       if (unit.config.contextMenu)
         canvas.contextMenu = new unit.ContextMenu(unit.config.contextMenu, contextMenuEntryHandler);
@@ -1316,7 +1346,7 @@ $Unit(__PATH__, __FILE__, function(unit, root, glob){
         canvas.contextMenu = null
 
       // cursor style should be changed on flash element,
-      // set canvas.style.cursor will not giving any effect
+      // setting canvas.style.cursor will not giving any effect
       flashObject.style.cursor = 'default'
 
       // freeing (right-) click event on canvas and get rid of 
@@ -1376,10 +1406,13 @@ $Unit(__PATH__, __FILE__, function(unit, root, glob){
       // we're almost ready ..
     };
 
-    var resizeCanvas = function(canvas) {
-      //trace('resizeCanvas()', canvas.width, canvas.height)
+    function resizeCanvas (canvas) {
+      //trace('resizeCanvas()', canvas.width, canvas.height, resizeCanvas.oldWidth, resizeCanvas.oldHeight)
       var backend = canvas.getBackend("2d"); 
+      // reflects standard behavior
       backend._resize(canvas.width, canvas.height);
+      resizeCanvas.oldWidth = canvas.width
+      resizeCanvas.oldHeight = canvas.height
     }
 
     unit.onPropertyChange = function(event) {
@@ -1389,32 +1422,38 @@ $Unit(__PATH__, __FILE__, function(unit, root, glob){
         case "height": 
         case "frameDuration": 
         case "style.cursor":
+        case "style.width":
+        case "style.height":
           canvas = event.srcElement; 
           backend = canvas.getBackend("2d"); 
       }
-      if (prop === "width" || prop === "height") {
+      if (prop == "width" || prop == "height") {
         var value = parseInt(canvas[prop]);
         if (isNaN(value) || value < 0) {
-          value = (prop === "width") ? 300 : 150;
+          value = (prop == "width") ? 300 : 150;
         }
-        if (parseInt(canvas.style[prop]) != value) 
-          canvas.style[prop] = value + "px";
-        if (parseInt(backend._flobject.style[prop]) != value)
-          backend._flobject.style[prop] = value + "px";
-
-        var w = parseInt(canvas.style.width), 
-            h = parseInt(canvas.style.height);
-        // call resizeCanvas() by interval to handle both width and height
+        backend._flobject[prop] = value
+        // call resizeCanvas() by interval to handle both width and height values
         clearTimeout(canvas._resizeIntId)
         //trace('onPropertyChange()', prop, value)
         canvas._resizeIntId = setTimeout(function(){
             resizeCanvas(canvas)
         }, 1)
-      } else if (prop === "frameDuration") {
+      } else if (prop == "frameDuration") {
         var dur = Math.abs(parseInt(canvas.frameDuration));
         backend._frameDuration = dur;
-      } else if (prop === "style.cursor") {
+        //trace('onPropertyChange()', 'frameDuration', dur )
+      } else if (prop == "style.cursor") {
         backend._flobject.style.cursor = canvas.style.cursor
+      // todo convert implicit size into real dimension
+      } else if (prop == "style.width") {
+        //trace('onPropertyChange()', 'style.width', canvas.style.width )
+        //backend._flobject.width = parseInt(canvas.style.width)
+        backend._flobject.style.width = canvas.style.width
+      } else if (prop == "style.height") {
+        //trace('onPropertyChange()', 'style.height', canvas.style.height )
+        //backend._flobject.height = parseInt(canvas.style.height)
+        backend._flobject.style.height = canvas.style.height
       }
     };
 
@@ -1443,11 +1482,13 @@ $Unit(__PATH__, __FILE__, function(unit, root, glob){
 
         // remove event listeners
         canvas.detachEvent("onpropertychange", unit.onPropertyChange);
-        flashObject.detachEvent("onfocus", unit.onFocus);
-        canvas.detachEvent("onmouseenter", canvas._onCanvasEnter);
-        canvas.detachEvent("onmouseleave", canvas._onCanvasLeave);
-        try{document.detachEvent("onmousedown", canvas._onMouseDown);}catch(e){}
-        try{document.detachEvent("oncontextmenu", canvas._onContextMenu);}catch(e){}
+        try{
+          canvas.detachEvent("onmouseenter", canvas._onCanvasEnter);
+          canvas.detachEvent("onmouseleave", canvas._onCanvasLeave);
+          flashObject.detachEvent("onfocus", unit.onFocus);
+          document.detachEvent("onmousedown", canvas._onMouseDown);
+          document.detachEvent("oncontextmenu", canvas._onContextMenu);
+        }catch(e){}
 
         // clear idle intervals
         backend._clear();
@@ -1472,9 +1513,9 @@ $Unit(__PATH__, __FILE__, function(unit, root, glob){
 
     var assertImageIsValid = function(img) {
       var validNodes = {IMG: true, CANVAS: true};
-      var tagName = img.tagName.toUpperCase();
+      var tagName = (img && img.tagName && img.tagName.toUpperCase()) || null;
 
-      if (!img || img.nodeType != 1) {
+      if (!img || img.nodeType != 1 || !tagName) {
         unit.throwException('TYPE_MISMATCH_ERR');
       }
       if (! (tagName in validNodes)) {
@@ -1503,9 +1544,5 @@ $Unit(__PATH__, __FILE__, function(unit, root, glob){
     // prevent IE6 memory leaks
     window.attachEvent("onbeforeunload", unit.onUnload);
 
-    // cache SWF data so that object is interactive upon writing
-    var req = new ActiveXObject("Microsoft.XMLHTTP");
-    req.open("GET", swf_url, false);
-    req.send(null);
   });
 });

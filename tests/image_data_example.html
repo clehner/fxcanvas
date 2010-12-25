@@ -2,8 +2,9 @@
 <html>
 <head>
   <title>Example of working with image data</title>
-    <!--<script src="../debug.php" type="text/javascript"></script>-->
     <script type="text/javascript" src="../jooscript.js"></script><script type="text/javascript" src="../fxcanvas.js"></script><!--[if IE]><script type="text/javascript" src="../flash_backend.js"></script><![endif]--><comment><script type="text/javascript" src="../canvas_backend.js"></script></comment>
+    <!--<script type="text/javascript" src="../libs/jooscript-basics.git/jooscript_debug.php"></script>-->
+    <!--<script src="../fxcanvas_debug.php" type="text/javascript"></script>-->
     <script id="source" type="text/javascript">
 onload = function () {
   var canvas = document.getElementById("cv1");
@@ -63,10 +64,11 @@ onload = function () {
                       canvas.loadImage(jpeg_data);
                   };
                   // Firefox throws an exception if called with quality argument
-                  if (navigator.userAgent.match("Firefox"))
-                    ctx.canvas.toDataURL(jpeg_mime, jpeg_handler);
-                  else
+                  try{
                     ctx.canvas.toDataURL(jpeg_mime, jpeg_qual, jpeg_handler);
+                  }catch(e){
+                    ctx.canvas.toDataURL(jpeg_mime, jpeg_handler);
+                  }
 
                   canvas = document.getElementById("cv4");
                   ctx = canvas.getContext("2d");
@@ -105,7 +107,7 @@ onload = function () {
 </head>
 <body>
     <h2>Example of working with image data</h2>
-    <p>Note: test will not work with local file system</p>
+    <p>Note: test will not work on local file system</p>
 
   <table>
     <tr vAlign="top">

@@ -8,7 +8,8 @@ $Unit(__PATH__, __FILE__, function(unit, root, glob){
 
   $Import(unit,
     "buz.util.*",
-    "buz.fxcanvas.*"
+    "buz.fxcanvas.*",
+    "joo.object"
   );
 
   $Package("buz.fxcanvas.backend", function(group) {
@@ -74,7 +75,7 @@ $Unit(__PATH__, __FILE__, function(unit, root, glob){
           var ctx = this.__native_getContext(contextId);
           this.__fx_context_2d = new unit.extCanvasRenderingContext2D(this, ctx);
           ctx._ext = this.__fx_context_2d;
-          unit.updateObject(ctx, group.CanvasRenderingBackend2D);
+          unit.object.extend(ctx, group.CanvasRenderingBackend2D);
         }
         return this.__fx_context_2d;
       };
@@ -101,7 +102,8 @@ $Unit(__PATH__, __FILE__, function(unit, root, glob){
             canvas = this;
 
         var arg = args.pop(), 
-            src = typeof arg == "object" ? arg.src : arg;
+            src = typeof arg == "object" ? arg.src : arg,
+            id = typeof arg == "object" ? arg.id : null;
 
         if(arg.tagName == "CANVAS") {
           if (typeof canvas.onload == 'function') {
@@ -112,6 +114,7 @@ $Unit(__PATH__, __FILE__, function(unit, root, glob){
         }
         else {
           var img = new Image();
+          if(id) img.id = id
           img.onload = function () {
             if (typeof canvas.onload == 'function') {
               canvas.onload(img);
@@ -210,8 +213,7 @@ $Unit(__PATH__, __FILE__, function(unit, root, glob){
       // set canvas parameters from tag attributes
       //
       var params = unit.getCanvasParams(canvas);
-      if(params.frameDuration) 
-        canvas.frameDuration = params.frameDuration;
+      canvas.frameDuration = params.frameDuration || unit.config.frameDuration;
       if(typeof params.tracePathBounds === "boolean") 
         canvas.tracePathBounds = params.tracePathBounds;
       if(params.onload) 

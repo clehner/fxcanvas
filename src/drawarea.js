@@ -8,7 +8,7 @@
  */
 $Unit(__PATH__, __FILE__, function(unit)
 {
-  $Import(unit, "geom.*", "browser" );
+  unit.Import("geom.*", "platform" );
 
   $Package("buz.fxcanvas.test", function(group)
   {
@@ -98,8 +98,7 @@ $Unit(__PATH__, __FILE__, function(unit)
                 "rgba(255, 204, 102, .8)" : 
                 "rgba(153, 255, 51, .8)")
             .setLineWidth(1)
-            .strokeRect(bbox.x, bbox.y, bbox.width, bbox.height);
-        //console.log(bbox)
+            .strokeRect(bbox);
     }
 
     function drawKnot(p, width, height, style) {
@@ -108,7 +107,6 @@ $Unit(__PATH__, __FILE__, function(unit)
             hook_width = 20,
             hook_height = 20;
 
-        //ctx.fillRect(p.x - (w / 2), p.y - (h / 2), w, h)
         ctx.setFillStyle(style || "rgba(178, 255, 0, .8)")
             .beginPath()
             .rect(p.x - (w / 2), p.y - (h / 2), w, h)
@@ -139,7 +137,7 @@ $Unit(__PATH__, __FILE__, function(unit)
                 if (x0 || y0) {
                     ctx.beginPath()
                         .moveTo(x0, y0)
-                        .vectorTo(p.x, p.y)
+                        .vectorTo(p)
                         .stroke();
                 }
                 switch(q) {
@@ -152,7 +150,7 @@ $Unit(__PATH__, __FILE__, function(unit)
                     default:
                 }
                 drawKnot(p, 5, 5, st)
-                if (ctx.isPointInPath(mouse.x, mouse.y)) {
+                if (ctx.isPointInPath(mouse)) {
                     grab = [i, q]
                 }
                 x0 = a[q]
@@ -180,11 +178,11 @@ $Unit(__PATH__, __FILE__, function(unit)
                 switch(c) {
                     case "moveTo":
                         if (!a.length) break drawPath;
-                        args = a;
+                        args = [new unit.Point(a[0], a[1])];
                         break;
                     case "lineTo":
                         if (!a.length) break drawPath;
-                        args = a;
+                        args = [new unit.Point(a[0], a[1])];
                         break;
                     case "quadraticCurveTo":
                         if (a.length < 4) break drawPath;
@@ -223,7 +221,7 @@ $Unit(__PATH__, __FILE__, function(unit)
                             p = new unit.Point(x1, y1),
                             v = p.vectorTo(x2, y2),
                             w = v.x, h = v.y,
-                            args = [x1, y1, w, h]
+                            args = [new unit.Rectangle(x1, y1, w, h)];
                         break
                 }
                 ctx[c].apply(ctx, args)
@@ -259,7 +257,7 @@ $Unit(__PATH__, __FILE__, function(unit)
 
     addDOMLoadEvent(function () {
         // disable text selection in IE
-        if (unit.browser.isIE)
+        if (unit.platform.isIE)
           document.onselectstart = function () { return false; };
 
         var mouseDown = true;
@@ -311,21 +309,45 @@ $Unit(__PATH__, __FILE__, function(unit)
             }, false);
         }
 
+        var m = unit.Matrix2d()
+        var x_ = 0, y_ = 0;
+
         canvas.addEventListener("mousemove", function (e) {
-            if (e.shiftKey) return
             getRelativeCoords(mouse, this, e);
-            ctx.transformMatrix.multiplyPoint(mouse);
+            if (e.ctrlKey) {
+              var p = m.multiplyPoint(mouse);
+              // classical mistake is 'use the new value of X when computing the new value of y!' ...
+              // http://math.stackexchange.com/questions/6024/2d-rotation-falls-spirally-inwards
+              //var theta = transform.rotate
+              //var c = Math.cos(theta)
+              //var s = Math.sin(theta)
+              //var x = mouse.x*c - mouse.y*s;
+              //var y = mouse.x*s + mouse.y*c; 
+              //mouse.x = x, mouse.y = y
+              drawKnot(p, 5, 5, "red")
+              return 
+            }
             if (mouseDown) changed = true;
         }, false);
 
         canvas.addEventListener("mousedown", function (e) {
             getRelativeCoords(mouse, this, e);
-            ctx.transformMatrix.multiplyPoint(mouse);
+            var m_ = ctx.transformMatrix
+            x_ = mouse.x
+            y_ = mouse.y
+            m.identity()
+            m.translate(transform.tx, transform.ty)
+            m.scale(transform.scale, transform.scale)
+            m.rotate(transform.rotate)
+
             if (e.shiftKey) {
                 testPointInPath = true;
                 draw(mouse);
+                var p = m_.multiplyPoint(mouse);
+                drawKnot(p, 5, 5, "red")
                 return
             }
+            
             testPointInPath = false;
             if (!cmd) return;
             grab = null
@@ -333,7 +355,9 @@ $Unit(__PATH__, __FILE__, function(unit)
             drawControlPoints()
             if (!grab) addKnot(mouse)
             draw(mouse);
+            //console.log(m, mouse)
             changed = true;
+
         }, false);
 
         canvas.addEventListener("mouseup", function (e) {
@@ -359,7 +383,7 @@ $Unit(__PATH__, __FILE__, function(unit)
 
         clear();
 
-        if (!unit.browser.isIE)
+        if (!unit.platform.isIE)
             canvas.style.cursor = "crosshair";
     });
 
@@ -371,7 +395,8 @@ $Unit(__PATH__, __FILE__, function(unit)
     }
 
     function clearCanvas() {
-        ctx.clearRect(0, 0, canvas.width, canvas.height)
+        var rect = new unit.Rectangle(0, 0, canvas.width, canvas.height)
+        ctx.clearRect(rect)
     }
 
     function clearPath() {

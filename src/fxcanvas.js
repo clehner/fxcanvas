@@ -13,23 +13,20 @@
 
 $Unit(__PATH__, __FILE__, function(unit, root, glob){
 
-  $Import(unit, "buz.fxcanvas.config", "browser");
+  unit.Import("buz.fxcanvas.config", "platform", "w3c.DOMException");
 
   // common stuff
   $Package("buz.fxcanvas", function (group) {
 
     group.throwException = function(s) {
       //trace(s.toString())
-      throw new group._DOMException(s);
+      throw new unit.DOMException(s);
     };
 
     group.throwError = function(s) {
       //trace(s.toString())
       throw new Error(s);
     };
-
-    // IE fix 
-    group._DOMException = DOMException;
 
     // default context properties
     //
@@ -60,7 +57,8 @@ $Unit(__PATH__, __FILE__, function(unit, root, glob){
     group.getCanvasParams = function(canvas) {
       var _width = canvas.getAttribute("width"),
           _height = canvas.getAttribute("height"),
-          _onframe = canvas.getAttribute("oncanvasframe"),
+          _oncanvasframe = canvas.getAttribute("oncanvasframe"),
+          _oncanvasresize = canvas.getAttribute("oncanvasresize"),
           _onload = canvas.getAttribute("onload"),
           _tracePathBounds = canvas.getAttribute("tracePathBounds"),
           _frameDuration = canvas.getAttribute("frameDuration");
@@ -87,7 +85,8 @@ $Unit(__PATH__, __FILE__, function(unit, root, glob){
         id : canvas.getAttribute("id"),
         frameDuration : _frameDuration && parseInt(_frameDuration),
         tracePathBounds : _tracePathBounds,
-        onframe : _onframe && Function(_onframe),
+        oncanvasframe : _oncanvasframe && Function(_oncanvasframe),
+        oncanvasresize : _oncanvasresize && Function(_oncanvasresize),
         onload : _onload && Function(_onload),
         offsetLeft : canvas.offsetLeft,
         offsetTop : canvas.offsetTop
@@ -96,7 +95,11 @@ $Unit(__PATH__, __FILE__, function(unit, root, glob){
 
     // initialize canvas elements prior to onload event
     //
-    addDOMLoadEvent(function() {
+    unit.Event.once("initialize", function() {
+
+      // IE fix 
+      //group._DOMException = DOMException;
+
       if (unit.config.enable) {
         group.backend.initialize();
       }

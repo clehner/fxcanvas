@@ -17,6 +17,8 @@ var colortbl2 = [];
 var sqrttbl = [];
 var pow2 = [];
 
+var ready = true;
+
 function map_generic(f) {
     /* experimentally, 30 000 elements are required for 128 x 128 map,
      * and the requirements grow to the second power because of the
@@ -92,7 +94,7 @@ var cv;
 
 function stop_effect() {
     if(cv)
-        cv.onframe = null
+        cv.oncanvasframe = null
 }
 
 /* can be used as restart, too */
@@ -100,39 +102,65 @@ function start_effect() {
     stop_effect();
 
     /* initialize the helper canvas */
+    helpercanvasctx = helpercanvas.getContext("2d");
+    helpercanvas.oncanvasresize = function(){
+        
+        if (helpercanvasctx.getImageData) {
+            //helperimg = helpercanvasctx.getImageData(0, 0, dim, dim);
+            helpercanvasctx.invoke("getImageData", 0, 0, dim, dim, function(_helperimg){
+              
+                var helperimgdata = _helperimg.data;
+                /* preinit alpha to max */
+                for (var i = 0; i < dim * dim; i += 1)
+                    helperimgdata[i] = 0x000000ff;
+                helperimg = _helperimg
+                really_start()
+            });
+        } else {
+        /* your canvas sucks */
+        helperimg = null;
+        }
+    }
+    if(helpercanvas.width == dim && helpercanvas.height == dim)
+        helpercanvas.oncanvasresize()
     helpercanvas.width = dim;
     helpercanvas.height = dim;
-    helpercanvasctx = helpercanvas.getContext("2d");
-    if (helpercanvasctx.getImageData) {
-        helperimg = helpercanvasctx.getImageData(0, 0, dim, dim);
-	var helperimgdata = helperimg.data;
-	/* preinit alpha to max */
-	for (var i = 0; i < dim * dim; i += 1)
-	    helperimgdata[i] = 0x000000ff;
-    } else {
-	/* your canvas sucks */
-	helperimg = null;
-    }
+}
+
+function really_start(){
+    
+    ready = true
 
     cv = document.getElementById('canvas');
+    cv.frameDuration = 50
+    //trace("!", cv.style.width, cv.style.height)
+    function start(){
+        
+        var ctx = cv.getContext("2d");
+        /* this results in 1:1 scaling but canvas might have an arbitrary size
+         * if CSS scaling isn't used. So I keep it. */
+        ctx.scale(Math.floor(cv.width / dim), Math.floor(cv.height / dim));
+
+        for (var i = 0; i < document.forms[0].r.length; i += 1) {
+        if (document.forms[0].r[i].checked)
+            document.forms[0].r[i].onclick();
+        }
+
+        calc_pow2();
+        update_render_func();
+
+        cv.oncanvasframe  = function (){
+            if(ready) {
+                ready = false
+                runplasma(ctx);
+            }
+        }
+    }
     cv.width = dim;
     cv.height = dim;
-    var ctx = cv.getContext("2d");
-    /* this results in 1:1 scaling but canvas might have an arbitrary size
-     * if CSS scaling isn't used. So I keep it. */
-    ctx.scale(Math.floor(cv.width / dim), Math.floor(cv.height / dim));
-
-    for (var i = 0; i < document.forms[0].r.length; i += 1) {
-	if (document.forms[0].r[i].checked)
-	    document.forms[0].r[i].onclick();
-    }
-
-    calc_pow2();
-    update_render_func();
-
-    cv.onframe  = function (){
-        runplasma(ctx);
-    }
+    if(cv.width == dim && cv.height == dim)
+        start()
+    cv.oncanvasresize = start
     //effect_run = setInterval(function() { runplasma(ctx); }, 50);
 }
 
@@ -248,12 +276,16 @@ function construct_render_func(
 
     if (is_put_image) {
 	body += "if (ctx.globalAlpha == 1.0)";
-        body += "    ctx.putImageData(helperimg, 0, 0);";
+        body += "    ctx.invoke('putImageData', helperimg, 0, 0, function(){ready=true});";
         body += "else {";
         /* putImageData ignores global alpha */
-	body += "    helpercanvasctx.putImageData(helperimg, 0, 0);";
-	/* drawImage, in contrast, uses it, so we get our motion blur. */
-	body += "    ctx.drawImage(helpercanvas, 0, 0);";
+        body += "    helpercanvasctx.putImageData(helperimg, 0, 0);";
+        /* drawImage, in contrast, uses it, so we get our motion blur. */
+        body += "        ctx.canvas.onload=function(helpercanvas){";
+        body += "           ctx.drawImage(helpercanvas, 0, 0);";
+        body += "           ready=true";
+        body += "        };";
+        body += "        ctx.canvas.loadImage(helpercanvas);";
         body += "}";
     }
     return new Function("ctx, x1, y1, x2, y2", body);
@@ -290,6 +322,7 @@ function calc_pow2() {
 
 onload = function() {
     helpercanvas = document.createElement('canvas');
+    helpercanvas.frameDuration = 10
     /* set dimensions from form */
     document.forms[0].d.onchange();
     randomize_colors();
@@ -297,6 +330,7 @@ onload = function() {
     calc_pow2();
     /* start/stop based on checkbox state */
     document.forms[0].s.onclick();
+    //document.body.appendChild(helpercanvas)
 };
 
 
@@ -310,6 +344,8 @@ onload = function() {
        compatiblity layer, but the glue layer would have a huge impact
        for performance.)</p>
 
+    <p>For Internet Explorer users: if you are experiencing problems with browser script timeout, set registry key <code>HKEY_CURRENT_USER\Software\Microsoft\InternetExplorer\Styles\MaxScriptStatements</code> as DWORD=0xFFFFFFFF.</p>
+
     <canvas id="canvas" width="1" height="1" style="width: 512; height: 512"></canvas>
     <form onsubmit="return false">
         <table>
@@ -318,7 +354,8 @@ onload = function() {
 		<td><label><input checked="checked" type="checkbox" name="s" onclick="if (this.checked) { start_effect(); } else { stop_effect(); }"/> Run/pause</label></td>
 	    <tr>
 		<td>Pixels per x/y axis:</td>
-		<td><input type="text" name="d" onchange="stop_effect(); dim = parseInt(this.value) || 128; this.value = dim; this.form.s.onclick()" value="512" maxlength="3" size="3"/>
+        <!-- fix for IE: value=256 was=512-->
+		<td><input type="text" name="d" onchange="stop_effect(); dim = parseInt(this.value) || 128; this.value = dim; this.form.s.onclick()" value="256" maxlength="3" size="3"/>
 	    <tr>
 		<td>Potential:</td>
 		<td>

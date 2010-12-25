@@ -4,13 +4,25 @@
  * Copyright (c) 2010 Evgen Burzak <buzzilo at gmail.moc>
  * Released under the MIT/X License
  */
-$Unit(__PATH__, __FILE__, function(unit){
+$Unit(__PATH__, __FILE__, function(unit, root, glob){
 
   $Import(unit,
-    "browser",
+    "platform",
     "geom.*", 
     "buz.fxcanvas.config"
   );
+
+  unit.Matrix2d.prototype._transform = function (args) {
+    // todo it's a quite complicated part...
+  };
+
+  unit.Matrix2d.prototype._setTransform = function (args) {
+    // todo it's a quite complicated part...
+  };
+
+  unit.Matrix2d.prototype._dump = function () {
+    return [this[0], this[1], this[2], this[3], this[4], this[5]].join(",");
+  };
 
   $Package("buz.fxcanvas", function(group) {
 
@@ -44,34 +56,23 @@ $Unit(__PATH__, __FILE__, function(unit){
     {
       // internals
       //
-      this._isFlashBackend = unit.browser.isIE
+      this._isFlashBackend = unit.platform.isIE
       // backend: flash or canvas
       this._backend = backend;
       // path bounds
       this._bounds = new Bounds;
+      // last added segment
+      this._xy0 = new unit.Point;
       this._tracePathBounds = unit.config.tracePathBounds;
       this._stateStack = [];
       this._pathStack = [];
-      this._useRawImageData = false;
+      this._useRawImageData = unit.config.useRawImageData;
+      this._useCanvasPath = unit.config.useCanvasPath;
 
       this.canvas = canvas;
 
-      unit.Matrix.prototype._transform = function (args) {
-        // todo it's a quite complicated part...
-      };
-      unit.Matrix.prototype._setTransform = function (args) {
-        // todo it's a quite complicated part...
-        this.a = args[0];
-        this.c = args[1];
-        this.b = args[2];
-        this.d = args[3];
-        this.tx = args[4];
-        this.ty = args[5];
-      };
-      unit.Matrix.prototype._dump = function () {
-        return [this.a, this.b, this.c, this.d, this.tx, this.ty].join(",");
-      };
-      this.transformMatrix = new unit.Matrix;
+      this.transformMatrix = new unit.Matrix2d();
+      this.transformMatrix.identity()
 
       // sadly, setters and getters are not working in IE ..
       //
@@ -104,93 +105,146 @@ $Unit(__PATH__, __FILE__, function(unit){
 
       // path
 
-      "clearRect" : function (rect, y, width, height) {
-        var x;
-        if (arguments.length == 1) {
-          x = rect.x
-          y = rect.y
-          width = rect.width
-          height = rect.height
-        }
-        else
-          x = rect
+      "clearRect" : function (x, y, width, height) {
+
+        if (arguments.length == 1)
+          y = x.y,
+          width = x.width,
+          height = x.height,
+          x = x.x;
+
         this._backend.clearRect(x, y, width, height);
         return this;
       },
       
-      "fillRect": function (rect, y, width, height) {
-        var x;
+      "fillRect": function (x, y, width, height) {
+
         if (arguments.length == 1)
-          x = rect.x,
-          y = rect.y,
-          width = rect.width,
-          height = rect.height;
-        else
-          x = rect;
+          y = x.y,
+          width = x.width,
+          height = x.height,
+          x = x.x;
+
         this._backend.fillRect(x, y, width, height);
         return this;
       },
 
-      "strokeRect": function (rect, y, width, height) {
-        var x;
-        if (arguments.length == 1) {
-          x = rect.x
-          y = rect.y
-          width = rect.width
-          height = rect.height
-        }
-        else
-          x = rect
+      "strokeRect": function (x, y, width, height) {
+
+        if (arguments.length == 1)
+          y = x.y,
+          width = x.width,
+          height = x.height,
+          x = x.x;
+
         this._backend.strokeRect(x, y, width, height);
         return this;
       },
 
       "closePath" : function () {
+        if(this._path)
+          this._path.close();
         this._backend.closePath();
         return this;
       },
 
       "beginPath" : function () {
-        this._path = this.createPath();
-        if (this._tracePathBounds)
+
+        if(this._useCanvasPath)
+          this._path = this.createPath();
+
+        if (this._tracePathBounds) {
           this._bounds.clear()
+          this._xy0.set(0,0)
+        }
         this._backend.beginPath();
         return this;
       },
 
       "moveTo" : function (x, y) {
-        //this._path.moveTo(x, y)
-        if (this._tracePathBounds)
-          this._bounds.addKnot(x, y)
+
+        if (arguments.length == 1)
+          y = x.y, 
+          x = x.x;
+
+        if(this._path)
+          this._path.moveTo(x, y)
+
+        if (this._tracePathBounds) {
+          this._xy0.set(x, y)
+          this._bounds.addKnot(x, y);
+        }
         this._backend.moveTo(x, y);
         return this;
       },
 
       "lineTo" : function (x, y) {
-        //this._path.lineTo(x, y)
-        if (this._tracePathBounds)
+
+        if (arguments.length == 1)
+          y = x.y, 
+          x = x.x;
+
+        if(this._path)
+          this._path.lineTo(x, y)
+
+        if (this._tracePathBounds) {
+          this._xy0.set(x, y)
           this._bounds.addKnot(x, y);
+        }
         this._backend.lineTo(x, y);
         return this;
       },
 
       "arcTo": function(x1, y1, x2, y2, radius) {
-        //this._path.arcTo(x1, y1, x2, y2, radius)
-        if (this._tracePathBounds)
+
+        if(this._path)
+          this._path.arcTo(x1, y1, x2, y2, radius)
+
+        if (this._tracePathBounds) {
           this._bounds.addKnot(x1, y1);
+          this._xy0.set(x1, y1)
+        }
         this._backend.arcTo(x1, y1, x2, y2, radius);
       },
 
       "vectorTo" : function (x, y, arrowSize) {
-        // todo x, y - vector coordinates:
-        // ... lineTo(this.lastX + x, this.lastY + y)
-        //this._path.vectorTo(x, y, arrowSize)
+        
+        if (arguments.length == 1)
+          y = x.y, 
+          x = x.x;
+
+        if(!arrowSize)
+          arrowSize = 10;
+
+        if(this._path)
+          this._path.vectorTo(x, y, arrowSize)
+        
         this._backend.lineTo(x, y);
+
+        // 90° = 90 * (Math.PI/180) = 1.5707963267948966
+        // 120° = 2.6179938779914944
+
+        var v = this._xy0.vectorTo(x, y),
+            rot = Math.atan2(v.y, v.x),
+            dx, dy;
+
+        dx = arrowSize*Math.cos(rot+2.61),
+        dy = arrowSize*Math.sin(rot+2.61)
+
+        this._backend.lineTo( x + dx, y + dy );
+
+        dx = arrowSize*Math.cos(rot-2.61),
+        dy = arrowSize*Math.sin(rot-2.61)
+
+        this._backend.lineTo( x + dx, y + dy );
+
+        this._backend.lineTo( x, y );
+
         return this;
       },
 
       "__drawTestPoint" : function (x, y, text) {
-          this.fillStyle = "#f00"
+          this.fillStyle = "grey"
           var s = 5;
           this.fillRect(x - (s / 2), y - (s / 2), s, s)
           this.fillStyle = "#fff"
@@ -199,49 +253,58 @@ $Unit(__PATH__, __FILE__, function(unit){
       },
 
       "quadraticCurveTo": function(cpx, cpy, x, y) {
-        //this._path.quadraticCurveTo(cpx, cpy, x, y)
+
+        if(this._path)
+          this._path.quadraticCurveTo(cpx, cpy, x, y)
+
         if (this._tracePathBounds) {
           // 
-          var v1 = (new unit.Point(this._bounds.x0, this._bounds.y0)).vectorTo(x, y),
+          var v1 = this._xy0.vectorTo(x, y),
               v2 = (new unit.Point(x + (v1.x / 2), y + (v1.y / 2))).vectorTo(cpx, cpy);
 
           this._bounds.addKnot(x + (v2.x / 2), y + (v2.y / 2));
           //this.__drawTestPoint(this._bounds.x0, this._bounds.y0, "c")
           this._bounds.addKnot(x, y);
+          this._xy0.set(x, y)
         }
         this._backend.quadraticCurveTo(cpx, cpy, x, y);
         return this;
       },
 
       "bezierCurveTo": function(cp1x, cp1y, cp2x, cp2y, x, y) {
-        //this._path.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, x, y)
+
+        if(this._path)
+          this._path.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, x, y)
+
         if (this._tracePathBounds) {
           // fixme i'm sure this could be shorter!
           //
-          var v1 = new unit.Point(this._bounds.x0, this._bounds.y0).vectorTo(cp1x, cp1y),
-              v2 = new unit.Point(x, y).vectorTo(cp2x, cp2y),
-              v3 = new unit.Point(this._bounds.x0, this._bounds.y0).vectorTo(x, y),
-              a = new unit.Point(this._bounds.x0 + (v1.x / 2), this._bounds.y0 + (v1.y / 2)),
-              b = new unit.Point(x + (v2.x / 2), y + (v2.y / 2)),
-              c = new unit.Point(x + (v1.x / 2) + (v2.x / 2) - (v3.x / 2), 
-                                  y + (v1.y / 2) + (v2.y / 2) - (v3.y / 2)),
-              v4 = (new unit.Point(a.x, a.y)).vectorTo(c.x, c.y),
-              v5 = (new unit.Point(b.x, b.y)).vectorTo(c.x, c.y),
-              d = new unit.Point(a.x + (v4.x / 2), a.y + (v4.y / 2)),
-              e = new unit.Point(b.x + (v5.x / 2), b.y + (v5.y / 2)),
-              v6 = (new unit.Point(e.x, e.y)).vectorTo(d.x, d.y),
-              f = new unit.Point(e.x + (v6.x / 2), e.y + (v6.y / 2)),
-              v7 = new unit.Point(this._bounds.x0, this._bounds.y0).vectorTo(a.x, a.y),
-              v8 = new unit.Point(x, y).vectorTo(b.x, b.y),
-              g = new unit.Point(this._bounds.x0 + (v7.x / 2), 
-                                  this._bounds.y0 + (v7.y / 2)),
-              h = new unit.Point(x + (v8.x / 2), y + (v8.y / 2)),
-              v9 = new unit.Point(g.x, g.y).vectorTo(d.x, d.y),
-              v10 = new unit.Point(h.x, h.y).vectorTo(e.x, e.y),
-              i = new unit.Point(g.x + (v9.x / 2), g.y + (v9.y / 2)),
-              j = new unit.Point(h.x + (v10.x / 2), h.y + (v10.y / 2));
+          var Point = unit.Point,
+              xy0 = this._xy0,
+              xy = new Point(x, y),
+              v1 = xy0.vectorTo(cp1x, cp1y),
+              v2 = xy.vectorTo(cp2x, cp2y),
+              v3 = xy0.vectorTo(x, y),
+              a = new Point(xy0.x + (v1.x/2), xy0.y + (v1.y/2)),
+              b = new Point(x + (v2.x/2), y + (v2.y/2)),
+              c = new Point(x + (v1.x/2) + (v2.x/2) - (v3.x/2), y + (v1.y/2) + (v2.y/2) - (v3.y/2)),
+              v4 = a.vectorTo(c),
+              v5 = b.vectorTo(c),
+              d = new Point(a.x + (v4.x/2), a.y + (v4.y/2)),
+              e = new Point(b.x + (v5.x/2), b.y + (v5.y/2)),
+              v6 = e.vectorTo(d.x, d.y),
+              f = new Point(e.x + (v6.x/2), e.y + (v6.y/2)),
+              v7 = xy0.vectorTo(a),
+              v8 = xy.vectorTo(b),
+              g = new Point(xy0.x + (v7.x/2), xy0.y + (v7.y/2)),
+              h = new Point(x + (v8.x/2), y + (v8.y/2)),
+              v9 = g.vectorTo(d),
+              v10 = h.vectorTo(e),
+              i = new Point(g.x + (v9.x/2), g.y + (v9.y/2)),
+              j = new Point(h.x + (v10.x/2), h.y + (v10.y/2));
 
-          /** vizualise points
+          /** vizualise points **/
+          /*
           this.__drawTestPoint(a.x, a.y, "a");
           this.__drawTestPoint(b.x, b.y, "b");
           this.__drawTestPoint(c.x, c.y, "c");
@@ -258,41 +321,47 @@ $Unit(__PATH__, __FILE__, function(unit){
           this._bounds.addKnot(i.x, i.y);
           this._bounds.addKnot(j.x, j.y);
           this._bounds.addKnot(x, y);
+          this._xy0.set(x, y)
         }
         this._backend.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, x, y);
         return this;
       },
 
-      "rect" : function (rect, y, width, height) {
-        //this._path.rect(rect, y, width, height)
-        var x;
-        if (arguments.length == 1) {
-          x = rect.x
-          y = rect.y
-          width = rect.width
-          height = rect.height
-        }
-        else
-          x = rect
+      "rect" : function (x, y, width, height) {
+
+        if (arguments.length == 1)
+          y = x.y,
+          width = x.width,
+          height = x.height,
+          x = x.x;
+
+        if(this._path)
+          this._path.rect(x, y, width, height)
 
         if (this._tracePathBounds) {
           this._bounds.expandBox(x, y, width, height);
+          this._xy0.set(x + width, y + height)
         }
         this._backend.rect(x, y, width, height);
         return this;
       },
 
       "arc": function (x, y, radius, startAngle, endAngle, anticlockwise) {
-        //this._path.arc(x, y, radius, startAngle, endAngle, anticlockwise)
+
+        if(this._path)
+          this._path.arc(x, y, radius, startAngle, endAngle, anticlockwise)
+
         if (this._tracePathBounds) {
-          this._bounds.expandBox( x - radius, y - radius, radius * 2, radius * 2);
+          var r = radius * 2
+          this._bounds.expandBox( x - radius, y - radius, r, r);
+          this._xy0.set(x + r, y + r)
         }
         this._backend.arc(x, y, radius, startAngle, endAngle, anticlockwise);
         return this;
       },
 
       "stroke" : function () {
-        if(this._path.length) {
+        if(this._path && this._path.length) {
           // append path stack
           this._backend.appendPath(this._path)
         }
@@ -318,12 +387,14 @@ $Unit(__PATH__, __FILE__, function(unit){
 
       // adding `path` to current path stack
       "appendPath" : function(path) {
-        this._path.append(path);
+        if(this._path)
+          this._path.append(path);
         return this;
       },
 
       "clonePath" : function() {
-        return this._path.clone();
+        if(this._path)
+          return this._path.clone();
       },
 
       // state stack
@@ -425,19 +496,20 @@ $Unit(__PATH__, __FILE__, function(unit){
           //return this._backend.createImageData(arguments[0])
       },
 
-      "getImageData": function(rect, sy, sw, sh) {
-        // todo for invoke command
+      "getImageData": function(sx, sy, sw, sh) {
+
+        // todo sx is rectangle for invoke command
         if(arguments.length == 1)
-          sy = rect.y,
-          sw = rect.width,
-          sh = rect.height,
-          rect = rect.x;
+          sy = sx.y,
+          sw = sx.width,
+          sh = sx.height,
+          sx = sx.x;
 
         // in IE returns nothing, must be called via invoke()
         if (this._isFlashBackend) {
           return null;
         }
-        var rawData = this._backend.getImageData(rect, sy, sw, sh);
+        var rawData = this._backend.getImageData(sx, sy, sw, sh);
         if(this._useRawImageData)
           return new group.ImageData(sw, sh, rawData);
         else
@@ -510,11 +582,12 @@ $Unit(__PATH__, __FILE__, function(unit){
       //
 
       "isPointInPath" : function (x, y) {
+        if(arguments.length == 1) y = x.y, x = x.x;
         if (this._isFlashBackend) {
           return this._tracePathBounds ? this.isPointInPathBounds(x, y) : false;
         } else {
           // isPointInPath fix for Firefox 
-          if (unit.browser.isFirefox) {
+          if (unit.platform.isFirefox) {
             this._backend.save();
             this._backend.setTransform(1, 0, 0, 1, 0, 0);
             var test = this._backend.isPointInPath(x, y)
@@ -527,14 +600,15 @@ $Unit(__PATH__, __FILE__, function(unit){
 
       // reserved for the future
       "isPointInPathBounds" : function (x, y) {
-        var bounds = this.getPathBounds();
-        var p = new unit.Point(x, y);
-        this.transformMatrix.multiplyPoint(p);
+        if(arguments.length == 1) y = x.y, x = x.x;
+        var bounds = this._bounds;
+        var m = this.transformMatrix.matrix
+        var p = {x: x, y: y}
+        if(!(m[0] == 1 && m[1] == 0 && m[2] == 0 && m[3] == 1 && m[4] == 0 && m[5] == 0)) {
+          p = this.transformMatrix.clone().invert().multiplyPoint(p);
+        }
 
-        if (p.x > bounds.x && p.y > bounds.y &&
-            p.x < bounds.x + bounds.width && p.y < bounds.y + bounds.height)
-              return true;
-        return false;
+        return bounds.isPointWithin(p);
       },
 
       // isPointInPath for chains
@@ -602,10 +676,10 @@ $Unit(__PATH__, __FILE__, function(unit){
       // some style helpers
 
       "__rgbaStyle" : function (r, g, b, a) { 
-          return ["rgba(", slice.call(arguments, 0).join(","), ")"].join(""); 
+          return ["rgba(", [r, g, b, a].join(","), ")"].join(""); 
       },
       "__rgbStyle" : function (r, g, b) { 
-          return ["rgb(", slice.call(arguments, 0).join(","), ")"].join(""); 
+          return ["rgb(", [r, g, b].join(","), ")"].join(""); 
       },
       "setFillStyleRGBA" : function (r, g, b, a) { 
           this.fillStyle = this.__rgbaStyle(r,g,b,a); 
@@ -648,45 +722,50 @@ $Unit(__PATH__, __FILE__, function(unit){
      * class Bounds
      */
     function Bounds (x, y, width, height) {
-      unit.Rectangle.call(this, x || 0, y || 0, width || 0, height || 0);
-      // last added knot
-      this.x0 = 0
-      this.y0 = 0
+      this.set(x, y, width, height)
+      this.knots = 0
     };
 
-    Bounds.prototype = {
-      "__set" : unit.Rectangle.prototype.__set,
-      "isPointWithin" : unit.Rectangle.prototype.isPointWithin,
+    Bounds.prototype = new unit.Rectangle;
+
+    unit.object.extend(Bounds.prototype, 
+    {
       "addKnot" : function (x, y) {
         var v = (new unit.Point(this.x, this.y)).vectorTo(x, y)
 
-        if (this.x == 0)
+        if(!this.knots) {
           this.x = x
-        else if (v.x < 0 || this.x == 0) { 
-          this.x += v.x
-          this.width -= v.x
-        }
-        else if (this.x + v.x > this.x + this.width) 
-          this.width = v.x
-
-        if (this.y == 0)
           this.y = y
-        else if (v.y < 0) {
-          this.y += v.y
-          this.height -= v.y
+          this.width = 0
+          this.height = 0
         }
-        else if (this.y + v.y > this.y + this.height) 
-          this.height = v.y
+        else {
+          if (v.x < 0) { 
+            this.x += v.x
+            this.width -= v.x
+          }
+          else if (this.x + v.x > this.x + this.width) {
+            this.width = v.x
+          }
 
-        this.x0 = x
-        this.y0 = y
+          if (v.y < 0) {
+            this.y += v.y
+            this.height -= v.y
+          }
+          else if (this.y + v.y > this.y + this.height) {
+            this.height = v.y
+          }
+        }
+        //trace("v", v, this.x, this.y)
+        this.knots++
       },
 
       "clear" : function () {
-        this.x0 = this.y0 = this.x = this.y = this.width = this.height = 0
+        this.knots = this.x = this.y = this.width = this.height = 0
       },
 
       "expandBox" : function (x, y, width, height) {
+        //trace("expandBox", x, y, width, height)
         this.addKnot(x, y);
         this.addKnot(x + width, y + height);
       },
@@ -694,7 +773,8 @@ $Unit(__PATH__, __FILE__, function(unit){
       "clone" : function () {
         return new Bounds(this.x, this.y, this.width, this.height)
       }
-    };
+
+    });
 
     // In IE serving huge image data won't makes you happy,
     // so I'm trying to implement this trick:
@@ -703,6 +783,18 @@ $Unit(__PATH__, __FILE__, function(unit){
     
     // ... it seems to be most compact and efficient data structure
     //
+    
+    // todo use typed arrays where possible
+    //
+    // The problem is order (big or little endian?) of bytes:
+    //
+    // var b = new ArrayBuffer(8);
+    // var v1 = new Uint32Array(b);
+    // v1[0]=0xffffffab;
+    // var v2 = new Uint8ClampedArray(b);
+    // console.log([v1[0].toString(16), v2[0], v2[1], v2[2], v2[3]])
+    //
+    // will produce ["ffffffab", 171, 255, 255, 255]
 
     /*
      *  class ImageData
@@ -710,7 +802,7 @@ $Unit(__PATH__, __FILE__, function(unit){
     group.ImageData = function(width, height, initData, useRawImageData) {
       // fix for IE
       this.__useCache = false
-      this.__pixel = useRawImageData && !unit.browser.ie ? 4 : 1;
+      this.__pixel = useRawImageData && unit.platform.isIE ? 1 : 4;
       this.__cachedData = null
 
       if (width && height) {
@@ -729,7 +821,8 @@ $Unit(__PATH__, __FILE__, function(unit){
         this.height = arguments[0].height;
       }
 
-      this.data = new Array(this.width * this.height);
+      this.data = unit.VectorArray(this.width * this.height, unit.Uint, 32);
+      //this.data = new Array(this.width * this.height);
 
       // default data filled with black transparent 
       for (var y = 0; y < this.height; y++)
@@ -743,16 +836,8 @@ $Unit(__PATH__, __FILE__, function(unit){
       //
       "data" : null,
 
-      "__setPixel" : function (x, y, rgba) 
-      {
-      },
-
-      "__getPixel" : function (x, y, rgba) 
-      {
-      },
-
       /*
-      "__setPixel" : function (x, y, rgba) 
+      "putPixel8" : function (x, y, rgba) 
       {
         var ofs = ((y * this.width) + x) * this.__pixel,
             red = rgba >> 24 & 0xFF,
@@ -760,53 +845,32 @@ $Unit(__PATH__, __FILE__, function(unit){
             blue = rgba >> 8 & 0xFF,
             alpha = rgba & 0xFF;
 
-        if(this.__pixel == 4)
-          this.data[ofs] = red,
-          this.data[ofs + 1] = green,
-          this.data[ofs + 2] = blue,
-          this.data[ofs + 3] = alpha;
-        else
-          this.data[ofs] = String.fromCharCode( red, green, blue, alpha );
+        this.data[ofs] = red,
+        this.data[ofs + 1] = green,
+        this.data[ofs + 2] = blue,
+        this.data[ofs + 3] = alpha;
       },
 
-      "__getPixel" : function (x, y) 
+      "putPixel32" : function (x, y, rgba) 
       {
-        var ofs, pixelValue, red, green, blue, alpha;
-
-        if(this.__pixel == 4) 
-          ofs = ((y * this.width) + x) * this.__pixel,
-          red = this.data[ofs],
-          green = this.data[ofs + 1] ,
-          blue = this.data[ofs + 2] ,
-          alpha = this.data[ofs + 3];
-        else
-          ofs = y * this.width + x,
-          pixelValue = this.data[ofs],
-          red = pixelValue.charCodeAt(0),
-          green = pixelValue.charCodeAt(1),
-          blue = pixelValue.charCodeAt(2),
-          alpha = pixelValue.charCodeAt(3);
-
-        return (red << 24) + (green << 16) + (blue << 8) + alpha;
+        this.data[ y*this.width+x ] = rgba;
       },
 
-      "__getPixelOffset" : function (ofs) 
+      "getPixel8" : function (x, y) 
       {
-        var pixelValue, red, green, blue, alpha;
+        var ofs, red, green, blue, alpha;
 
-        if(this.__pixel == 4) 
-          red = this.data[ofs],
-          green = this.data[ofs + 1] ,
-          blue = this.data[ofs + 2] ,
-          alpha = this.data[ofs + 3];
-        else
-          pixelValue = this.data[ofs],
-          red = pixelValue.charCodeAt(0),
-          green = pixelValue.charCodeAt(1),
-          blue = pixelValue.charCodeAt(2),
-          alpha = pixelValue.charCodeAt(3);
-
+        ofs = ((y*this.width)+x)*4,
+        red = this.data[ofs],
+        green = this.data[ofs + 1] ,
+        blue = this.data[ofs + 2] ,
+        alpha = this.data[ofs + 3];
         return (red << 24) + (green << 16) + (blue << 8) + alpha;
+      },
+      
+      "getPixel32" : function (x, y) 
+      {
+        return this.data[ y*this.width+x ]
       },
       */
 
@@ -814,7 +878,7 @@ $Unit(__PATH__, __FILE__, function(unit){
         if(this.__useCache && this.__cachedData) 
           return this.__cachedData
 
-        var cvImData = unit.browser.isOpera ? // stub image data object for Opera
+        var cvImData = unit.platform.isOpera ? // stub image data object for Opera
                         {
                           'width' : this.width, 
                           'height' : this.height, 
@@ -844,7 +908,8 @@ $Unit(__PATH__, __FILE__, function(unit){
       "__fromCanvasData" : function (rawData) {
         this.width = rawData.width;
         this.height = rawData.height;
-        this.data = new Array(this.width * this.height);
+        this.data = unit.VectorArray(this.width * this.height, unit.Uint, 32);
+        //this.data = new Array(this.width * this.height);
         var ofs, red, green, blue, alpha;
         for (var y = 0; y < this.height; y++) 
         {
@@ -869,6 +934,15 @@ $Unit(__PATH__, __FILE__, function(unit){
       "toString" : function () 
       {
         return "ImageData["+this.data.length+"]";
+      },
+
+      "clone" : function(){
+        var buf = new group.ImageData(this.width, this.height)
+
+        //for (var i=0; i<buf.data.length; i++)
+          //buf.data[i] = this.data[i]
+        buf.data.set(this.data)
+        return buf;
       }
     };
 
@@ -889,7 +963,7 @@ $Unit(__PATH__, __FILE__, function(unit){
       this.length = 0
       this._stack = [];
       this._serial = [];
-      this._ie = unit.browser.ie;
+      this._ie = unit.platform.ie;
     };
 
     /*
@@ -958,10 +1032,10 @@ $Unit(__PATH__, __FILE__, function(unit){
         this._stack[this.length] = ["arcTo", args]
         this.length++
       },
-      "vectorTo" : function(x, y){
-        var args = [x, y]
+      "vectorTo" : function(x, y, arrowSize){
+        var args = [x, y, arrowSize]
         if(this._ie)
-          this._serial[this.length] = ["B", x, "\x01", y].join("")
+          this._serial[this.length] = ["B", args.join("\x01")].join("")
         this._stack[this.length] = ["vectorTo", args]
         this.length++
       },
@@ -986,8 +1060,8 @@ $Unit(__PATH__, __FILE__, function(unit){
         this._stack[this.length] = ["arc", args]
         this.length++
       },
-      "rect" : function(rect, y, width, height){
-        var args = [rect, y, width, height]
+      "rect" : function(x, y, width, height){
+        var args = [x, y, width, height]
         if(this._ie)
           this._serial[this.length] = ["H", args.join("\x01")].join("")
         this._stack[this.length] = ["rect", args]
@@ -1019,24 +1093,24 @@ $Unit(__PATH__, __FILE__, function(unit){
     };
 
     // useful thing: in Firefox native rendering context is not extendable
-    if (!window["extCanvasRenderingContext2D"])
-      window["extCanvasRenderingContext2D"] = group.extCanvasRenderingContext2D;
+    if (!glob["extCanvasRenderingContext2D"])
+      glob["extCanvasRenderingContext2D"] = group.extCanvasRenderingContext2D;
 
-    if (!window["ImageData"])
-      window["ImageData"] = group.ImageData;
+    if (!glob["ImageData"])
+      glob["ImageData"] = group.ImageData;
 
-    if (!window["CanvasPath"])
-      window["CanvasPath"] = group.CanvasPath;
+    if (!glob["CanvasPath"])
+      glob["CanvasPath"] = group.CanvasPath;
 
     function onUnload () {
-      window.detachEvent("onbeforeunload", onUnload);
-      window["extCanvasRenderingContext2D"] = null;
-      window["ImageData"] = null;
-      window["CanvasPath"] = null;
+      glob.detachEvent("onbeforeunload", onUnload);
+      glob["extCanvasRenderingContext2D"] = null;
+      glob["ImageData"] = null;
+      glob["CanvasPath"] = null;
     };
 
     // prevent IE6 memory leaks
-    if (window.attachEvent)
-      window.attachEvent("onbeforeunload", onUnload);
+    if (glob.attachEvent)
+      glob.attachEvent("onbeforeunload", onUnload);
   });
 });

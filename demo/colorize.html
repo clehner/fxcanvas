@@ -1,0 +1,295 @@
+<html><head>
+    <title>Colorize image</title>
+    <script type="text/javascript" src="../jooscript.js"></script>
+    <script type="text/javascript" src="../fxcanvas.js"></script>
+    <!--[if IE]><script type="text/javascript" src="../flash_backend.js"></script><![endif]-->
+    <comment><script type="text/javascript" src="../canvas_backend.js"></script></comment>
+    <script type="text/javascript" src="web-forkers.js"></script>
+    <script type="text/javascript" src="colorize.js"></script>
+    <script type="text/javascript" src="forker_helpers.js"></script>
+    <script type="text/javascript">
+
+        var output, imageData;
+
+        window.onload = function(){
+
+            var colorToneGrad
+
+            var colorTone = document.getElementById("tone")
+            var saturation = document.getElementById("saturation")
+
+            colorTone.onload = function(img) {
+                colorToneGrad = img
+            }
+            colorTone.loadImage("color-tone.png")
+
+            var satValue = 0
+            var hueValue = 0
+            colorTone.oncanvasframe = function(){
+                if(hueValue != self.colorTone) {
+                    if(colorToneGrad) {
+                        drawColorTonePicker()
+                        drawSaturationPicker()
+                        hueValue = self.colorTone
+                    }
+                }
+            }
+
+            saturation.oncanvasframe = function(){
+                if(satValue != self.saturation) {
+                    drawSaturationPicker()
+                    satValue = self.saturation
+                }
+            }
+
+            var colorToneHook = false, satHook = false
+
+            w3c(window)
+
+            function onSatMouseEvent(e){
+                if(satHook) {
+                    var sat = (e.pageX-e.target.offsetLeft)/e.target.width
+                    self.saturation = sat
+                }
+            }
+
+            function onHueMouseEvent(e){
+                if(colorToneHook) {
+                    var tone = (e.pageX-e.target.offsetLeft)/e.target.width
+                    self.colorTone = 360*tone
+                }
+            }
+
+            colorTone.addEventListener("mousemove", onHueMouseEvent, false)
+
+            saturation.addEventListener("mousemove", onSatMouseEvent, false)
+
+            colorTone.addEventListener("mousedown", function(e){
+                colorToneHook = true
+                onHueMouseEvent(e)
+            }, false)
+
+            saturation.addEventListener("mousedown", function(e){
+                satHook = true
+                onSatMouseEvent(e)
+            }, false)
+
+            window.addEventListener("mouseup", function(e){
+                colorToneHook = false
+                satHook = false
+            }, false)
+
+            var canvas = document.getElementById("canvas")
+            var sampleImage = document.getElementById("sample-image")
+            canvas.innerHTML = ""
+
+            output = document.createElement("canvas")
+            output.width = sampleImage.width
+            output.height = sampleImage.height
+            canvas.appendChild(output)
+
+            output.onload = function(img){
+                var ctx = this.getContext("2d")
+                ctx.drawImage(img,0,0)
+                ctx.invoke("getImageData", 0, 0, output.width, output.height, function(buf){
+                    imageData = buf
+                })
+
+            }
+            output.loadImage(sampleImage)
+
+            var hueCanvas = document.getElementById("tone")
+            var satCanvas = document.getElementById("saturation")
+            var hue_ctx = hueCanvas.getContext("2d")
+            var sat_ctx = satCanvas.getContext("2d")
+
+            function drawColorTonePicker() {
+                var hueX = self.colorTone / 360 * hueCanvas.width
+                //trace(hueX)
+
+                hue_ctx.clear()
+                hue_ctx.drawImage(colorToneGrad, 0, 0)
+                hue_ctx.strokeStyle = "white"
+                hue_ctx.lineWidth = 6
+                hue_ctx.beginPath()
+                hue_ctx.arc(hueX, hueCanvas.height/2, hueCanvas.height*.4, 0, Math.PI * 2, true);
+                hue_ctx.stroke()
+                hue_ctx.strokeStyle = "black"
+                hue_ctx.lineWidth = 2
+                hue_ctx.beginPath()
+                hue_ctx.arc(hueX, hueCanvas.height/2, hueCanvas.height*.4, 0, Math.PI * 2, true);
+                hue_ctx.stroke()
+
+            }
+
+            function drawSaturationPicker() {
+
+                var satX = self.saturation * satCanvas.width
+
+                sat_ctx.clear()
+
+                var satgrad = sat_ctx.createLinearGradient(0,0,satCanvas.width,0);  
+                satgrad.addColorStop(0, '#ccc');  
+                satgrad.addColorStop(1, getColorAtAngle(self.colorTone));  
+                  
+                sat_ctx.fillStyle = satgrad;  
+                sat_ctx.fillRect(0,0,satCanvas.width,satCanvas.height);
+                sat_ctx.strokeStyle = "white"
+                sat_ctx.lineWidth = 6
+                sat_ctx.beginPath()
+                sat_ctx.arc(satX, satCanvas.height/2, satCanvas.height*.4, 0, Math.PI * 2, true);
+                sat_ctx.stroke()
+                sat_ctx.strokeStyle = "black"
+                sat_ctx.lineWidth = 2
+                sat_ctx.beginPath()
+                sat_ctx.arc(satX, satCanvas.height/2, satCanvas.height*.4, 0, Math.PI * 2, true);
+                sat_ctx.stroke()
+
+            }
+
+        }
+
+        function getColorAtAngle (deg) {
+
+            deg = (360-deg+90)%360
+            var tone = Math.ceil(deg/30) || 1;
+            var toneMinAngle = (tone-1)*30, 
+                toneMaxAngle = tone*30, 
+                ratio = Math.abs((deg-toneMinAngle/toneMaxAngle-toneMinAngle)/30);
+
+            var redRatio, greenRatio, blueRatio;
+            if(tone==12) {
+                redRatio = ratio*.5;
+                greenRatio = 1
+                blueRatio = 0
+            }
+            else if(tone==1){
+                redRatio = (ratio*.5)+.5
+                greenRatio = 1
+                blueRatio = 0
+            }
+            else if(tone==2){
+                redRatio = 1
+                greenRatio = 1-(ratio*.5);
+                blueRatio = 0
+            }
+            else if(tone==3){
+                redRatio = 1
+                greenRatio = .5-(ratio*.5)
+                blueRatio = 0
+            }
+            else if(tone==4){
+                redRatio = 1
+                greenRatio = 0
+                blueRatio = ratio*.5
+            }
+            else if(tone==5){
+                redRatio = 1
+                greenRatio = 0
+                blueRatio = (ratio*.5)+.5
+            }
+            else if(tone==6){
+                redRatio = 1-(ratio*.5)
+                greenRatio = 0
+                blueRatio = 1
+            }
+            else if(tone==7){
+                redRatio = .5-(ratio*.5)
+                greenRatio = 0
+                blueRatio = 1
+            }
+            else if(tone==8){
+                redRatio = 0
+                greenRatio = ratio*.5
+                blueRatio = 1
+            }
+            else if(tone==9){
+                redRatio = 0
+                greenRatio = (ratio*.5)+.5
+                blueRatio = 1
+            }
+            else if(tone==10){
+                redRatio = 0
+                greenRatio = 1
+                blueRatio = 1-(ratio*.5)
+            }
+            else if(tone==11){
+                redRatio = 0
+                greenRatio = 1
+                blueRatio = .5-(ratio*.5)
+            }
+
+            var red = Math.round(255*redRatio)
+            var green = Math.round(255*greenRatio)
+            var blue = Math.round(255*blueRatio)
+
+            return ["rgb(",[red,green,blue].join(","),")"].join("");
+        };
+
+        $Import("forker_helpers.*")
+
+        function doColorize () {
+
+            var ctx = output.getContext("2d")
+
+            var use_workers = document.getElementById("use-workers").checked
+            
+            if(use_workers) {
+
+                var colorize_btn = document.getElementById("colorize-button")
+                colorize_btn.disabled = true
+                
+                var forker = new Forker("colorize.js")
+
+                forker.rawData = true
+
+                forker.onmessage = function(e) {
+                    var buf = e.data
+                    //trace("message", buf)
+                    if(typeof buf == "string" && buf == "ok") {
+
+                        buf = ImageData2JSON(imageData.clone())
+                        //trace("in", buf.substr(0, 100))
+
+                        if(imageData)
+                            forker.postMessage(buf)
+                    }
+                    else {
+
+                        //trace("out", buf.substr(0, 100))
+                        buf = JSON2ImageData(buf)
+                            
+                        ctx.invoke("putImageData", buf, 0, 0, function(){
+                            forker.terminate()
+                            colorize_btn.disabled = false
+                        })
+                    }
+                };
+
+                forker.onerror = function(e) {
+                    trace("Worker error: " + e.message + " (" + e.lineno + ")")
+                };
+
+                forker.postMessage("args;"+self.saturation+";"+self.colorTone)
+            }
+            else {
+
+                var buf = colorize(imageData.clone())
+                ctx.invoke("putImageData", buf, 0, 0, function(){
+                })
+            }
+            
+        }
+    </script>
+    </head>
+    <body>
+        <h2>Colorize image</h2>
+        <p title="I gave you crabs!" id="canvas"><img src="1107_11_344_2007.jpg" id="sample-image" width="470" height="353" /></p>
+        <p title="Tone"><canvas id="tone" width="470" height="40" frameDuration="10"></canvas></p>
+        <p title="Saturation"><canvas id="saturation" width="470" height="40" frameDuration="10"></canvas></p> 
+        <p><button onclick="doColorize()" id="colorize-button">Colorize</button><input type="checkbox" id="use-workers" checked="1"/> <label for="use-workers">Use Workers</label> </p>
+        <p>This demo was made using <a href="http://code.google.com/p/web-forkers/">Web Forkers</a>, <a href="http://burzak.com/proj/jooscript-basics/">JooScript basics</a>, <a href="http://burzak.com/proj/fxcanvas/">fxCanvas</a> and <a href="http://haxe.org">Haxe</a></p>
+        <p>Author: <a href="http://burzak.com">Evgeny Burzak</a> &lt;buzzilo@gmail.com&gt;</p>
+    </body>
+</html>
+

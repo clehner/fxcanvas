@@ -56,6 +56,8 @@ body {
 </style>
 <script type="text/javascript">
 
+$Import("browser")
+
 function sawFunc(a) {
   var PI = Math.PI;
   var PI2 = PI / 2;
@@ -74,6 +76,40 @@ function sawFunc(a) {
 function easeInEaseOut(t) {
   var t2 = t * t;
   return 3 * t2 - 2 * t * t2;
+}
+
+function draw(that) {
+        
+    var PI2 = Math.PI / 2;
+    var w = that.canvas.width, h = that.canvas.height
+    that.ctx.save();
+    that.ctx.clearRect(0, 0, w, h);
+    that.ctx.translate(w / 2, h / 2);
+    that.ctx.rotate(that.rotation);
+    // 0 -> 1, sin(0) = 0
+    // PI / 2 -> H / W, sin(PI/2) = 1
+
+    // sin(PI/2) = 1 -> limit factor is w and imgH
+
+    var iw = that.imageWidth;
+    var ih = that.imageHeight;
+    var scale;
+    if (iw <= w && iw <= h && ih <= h && ih <= w) {
+      scale = 1;
+    } else {
+      var sinr = sawFunc(that.rotation);
+      var cosr = sawFunc(that.rotation + PI2);
+      var ratio1 = sinr * Math.min(w / ih, h / iw);
+      var ratio2 = cosr * Math.min(w / iw, h / ih);
+      var ratio = Math.min(1, ratio1 + ratio2);
+      scale = ratio;
+    }
+    that.ctx.scale(scale, scale);
+    that.ctx.translate(-iw / 2, -ih / 2);
+    that.ctx.strokeRect(0, 0, iw, ih)
+    that.ctx.drawImage(that.image, 0, 0, iw, ih);
+    that.ctx.restore();
+
 }
 
 function ImageRotator(el, img, src, w, h) {
@@ -159,6 +195,11 @@ ImageRotator.prototype = {
       this.canvas.style.display = "block";
       this.image.style.display = "none";
 
+      var that = this
+      this.canvas.oncanvasresize = function(){
+        draw(that)
+      }
+
       this.canvas.style.left = 0 + "px";
       this.canvas.style.top = th + "px";
       this.canvas.style.width = w + "px";
@@ -166,33 +207,10 @@ ImageRotator.prototype = {
       this.canvas.style.height = h + "px";
       this.canvas.height = h;
 
-      this.ctx.save();
-      this.ctx.clearRect(0, 0, w, h);
-      this.ctx.translate(w / 2, h / 2);
-      this.ctx.rotate(this.rotation);
-      // 0 -> 1, sin(0) = 0
-      // PI / 2 -> H / W, sin(PI/2) = 1
+      // oncanvasresize will not be triggered if canvas size is the same
+      if(this.canvas.width == w || this.canvas.height == h)
+        draw(this)
 
-      // sin(PI/2) = 1 -> limit factor is w and imgH
-
-      var iw = this.imageWidth;
-      var ih = this.imageHeight;
-      var scale;
-      if (iw <= w && iw <= h && ih <= h && ih <= w) {
-        scale = 1;
-      } else {
-        var sinr = sawFunc(this.rotation);
-        var cosr = sawFunc(this.rotation + PI2);
-        var ratio1 = sinr * Math.min(w / ih, h / iw);
-        var ratio2 = cosr * Math.min(w / iw, h / ih);
-        var ratio = Math.min(1, ratio1 + ratio2);
-        scale = ratio;
-      }
-      this.ctx.scale(scale, scale);
-      this.ctx.translate(-iw / 2, -ih / 2);
-      this.ctx.strokeRect(0, 0, iw, ih)
-      this.ctx.drawImage(this.image, 0, 0, iw, ih);
-      this.ctx.restore();
     }
   },
 

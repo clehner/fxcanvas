@@ -1,0 +1,108 @@
+<html>
+  <head>
+    <script type="text/javascript" src="../jooscript.js"></script><script type="text/javascript" src="../fxcanvas.js"></script><!--[if IE]><script type="text/javascript" src="../flash_backend.js"></script><![endif]--><comment><script type="text/javascript" src="../canvas_backend.js"></script></comment>
+    <!--<script type="text/javascript" src="../libs/jooscript-basics.git/debug.php"></script>-->
+    <!--<script type="text/javascript" src="../debug.php"></script>-->
+    <style>
+        body, html
+        {
+            /*  so that the canvas is at the top left of the page for testcase purposes
+                -> pageX / pageY point exactly in the canvas    */
+            margin: 0;
+            padding: 0;
+        }
+      #foo, #bar
+      {
+        width:640px;
+        height:480px;
+      }
+      #bar {
+        background-color: #ccc;
+      }
+      p {
+        padding: 0 10px;
+    }
+    </style>
+
+    <script type="text/javascript">
+
+      window.onload = function(){
+        var foo = document.getElementById('foo')
+        var ctx = foo.getContext("2d")
+
+        var width = 640
+        var height = 480
+
+        $Import("geom.*")
+
+        w3c(window)
+
+        var img, hook = false, doResize = false;
+
+        function draw (e){
+          var scaleX = foo.width / width
+          var scaleY = foo.height / height 
+          ctx.clearRect(0, 0 , foo.width, foo.height)
+          if(img)
+            ctx.drawImage(img, 0, 0, 300, 240)
+          ctx.beginPath()
+          var x = foo.width-40*scaleX
+          var y = foo.height-40*scaleY
+          ctx.rect(x,y,40*scaleX,40*scaleY)
+          if(ctx.isPointInPath(e.pageX*scaleX , e.pageY*scaleY)) {
+            foo.style.cursor = "move"
+            ctx.fillStyle = "red"
+            if(hook)
+              doResize = true
+          } else {
+            foo.style.cursor = "default"
+            ctx.fillStyle = "green"
+          }
+          ctx.fill()
+
+          if(doResize) {
+            var v = p.vectorTo(e.pageX, e.pageY)
+            width += v.x
+            height += v.y
+          }
+
+          foo.style.width = width + "px"
+          foo.style.height = height + "px"
+
+          p.set(e.pageX, e.pageY)
+        }
+
+        window.addEventListener("mousemove", draw, false)
+
+        var p = Point(0, 0)
+
+        foo.addEventListener('mousedown', function(e){
+          hook = true
+        }, false)
+
+        window.addEventListener('mouseup', function(e){
+          doResize = hook = false
+        }, false)
+
+        foo.addEventListener('mouseout', function(e){
+          //doResize = hook = false
+        }, false)
+
+        foo.onload = function(_img){
+            
+            img = _img
+
+            draw({pageX: 0, pageY: 0})
+        }
+
+        foo.loadImage("night-in-village.jpg")
+      }
+    </script>
+  </head>
+  <body>
+    <div id="bar">
+      <canvas id="foo" height="240"></canvas>
+    </div>
+    <p>Drag right bottom green corner to resize canvas</p>
+  </body>
+</html>

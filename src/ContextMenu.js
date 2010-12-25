@@ -7,16 +7,16 @@
  */
 $Unit(__PATH__, __FILE__, function(unit, doc)
 {
-  $Import(unit, "browser");
+  $Import(unit, "platform");
 
   $Package("buz.fxcanvas", function(group) {
     
-    if(!unit.browser.isIE) return;
+    if(!unit.platform.isIE) return;
 
     var lang = navigator.browserLanguage,
         defLang = "en",
         // stupid fix for IE6 (or fix for stupid IE6)
-        IE6fix = (unit.browser.ie <= 6) || (doc.documentMode < 7) || "";
+        IE6fix = (unit.platform.ie <= 6) || (doc.documentMode < 7) || "";
 
     var defStyle = {
       background: "Menu",

@@ -1,0 +1,69 @@
+<html>
+  <head>
+
+    <script type="text/javascript" src="../jooscript.js"></script><script type="text/javascript" src="../fxcanvas.js"></script><!--[if IE]><script type="text/javascript" src="../flash_backend.js"></script><![endif]--><comment><script type="text/javascript" src="../canvas_backend.js"></script></comment>
+
+    <style type='text/css'>
+        body, html
+        {
+            /*  so that the canvas is at the top left of the page for testcase purposes
+                -> pageX / pageY point exactly in the canvas    */
+            margin: 0;
+            padding: 0;
+        }
+        canvas {
+          	cursor: sw-resize;
+      }
+    </style>
+
+    <script type="text/javascript">
+      window.onload = function() {
+        var canvas = document.getElementById('cv')
+        var ctx  = canvas.getContext('2d')
+
+        ctx.fillStyle = "#aaa"
+        ctx.fillRect(0,0,canvas.width,canvas.height)
+
+        ctx.fillStyle = "red"
+        ctx.beginPath();
+        ctx.arc(75, 75, 20, 0, Math.PI * 2, true);
+        ctx.fill();
+
+        ctx.fillStyle = "blue"
+        ctx.beginPath();
+        ctx.rect(123, 50, 50, 100)
+        ctx.fill();
+
+        var cursorChanged = false
+
+        function _onmousemove (evt){
+          var x, y
+          x = evt.pageX 
+          y = evt.pageY
+          ctx.beginPath();
+          ctx.arc(75, 75, 20, 0, Math.PI * 2, true);
+          if(ctx.isPointInPath(x, y)) {
+            canvas.style.cursor = 'pointer'
+            cursorChanged = true
+            return
+          }
+          ctx.beginPath();
+          ctx.rect(123, 50, 50, 100)
+          if(ctx.isPointInPath(x, y)) {
+            canvas.style.cursor = 'wait'
+            cursorChanged = true
+            return
+          }
+          if(cursorChanged)
+            canvas.style.cursor = 'sw-resize'
+        }
+
+        canvas.addEventListener('mousemove', _onmousemove, false);
+      }
+    </script>
+  </head>
+  <body>
+    <canvas id="cv" width="400" height="300"></canvas>
+    <p>Cursor must change when moving over shapes.</p>
+  </body>
+</html>

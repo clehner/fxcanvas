@@ -1,12 +1,12 @@
 Project  = fxCanvas
 projURL  = http://code.google.com/p/fxcanvas/
-Version  = 0.2(beta2)
+Version  = 0.2(beta3)
 Codename = supersonic
 Date     = $(shell date '+%Y%m%d')
 Year     = $(shell date '+%Y')
 
 # Google Closure Compiler
-compiler = $(HOME)/bin/compiler.jar
+compiler = java -jar $(HOME)/bin/compiler.jar
 header   = $(Project) v$(Version) ($(Date))
 srcdir   = src
 bindir   = .
@@ -40,8 +40,9 @@ objects  = $(fxcanvas_swf) $(fxcanvas_js) $(flash_backend_js) $(canvas_backend_j
 
 all: $(objects)
 
+# set script limits at maximum to allow complex drawings
 $(fxcanvas_swf): $(fxcanvas_as) 
-	mxmlc -incremental $(fxcanvas_as) -output $(fxcanvas_swf)
+	mxmlc -default-script-limits 1000000 60 -incremental $(fxcanvas_as) -output $(fxcanvas_swf)
 
 # FIXME: with --compilation_level ADVANCED_OPTIMIZATIONS output is broken
 #
@@ -49,19 +50,20 @@ $(fxcanvas_js): $(common)
 	echo '/*! $(header)' > $(fxcanvas_js)
 	echo '	- copyright 2009-$(Year), Evgeny Burzak <$(projURL)>' >> $(fxcanvas_js)
 	echo '	- released under the MIT License <http://www.opensource.org/licenses/mit-license.php>\n*/' >> $(fxcanvas_js)
-	java -jar $(compiler) $(addprefix --js ,$(common)) | \
+	$(compiler) $(addprefix --js ,$(common)) | \
 		sed "s/\$$(Version)/$(Version)/" |\
+		sed "s/\$$(fxcanvas_js)/$(notdir $(fxcanvas_js))/" |\
 		sed "s/\$$(flash_backend_js)/$(notdir $(flash_backend_js))/" |\
 		sed "s/\$$(canvas_backend_js)/$(notdir $(canvas_backend_js))/" |\
 		sed "s#\$$(projectURL)#$(projURL)#" >> $(fxcanvas_js)
 
 $(flash_backend_js): $(flash_backend)
 	echo '/*! $(header)  - Flash backend */' > $(flash_backend_js)
-	java -jar $(compiler) $(addprefix --js ,$(flash_backend)) >> $(flash_backend_js)
+	$(compiler) $(addprefix --js ,$(flash_backend)) >> $(flash_backend_js)
 
 $(canvas_backend_js): $(canvas_backend)
 	echo '/*! $(header)  - Canvas backend */' > $(canvas_backend_js)
-	java -jar $(compiler) $(addprefix --js ,$(canvas_backend)) >> $(canvas_backend_js)
+	$(compiler) $(addprefix --js ,$(canvas_backend)) >> $(canvas_backend_js)
 
 zip:
 	rm -rf "$(archives)/fxcanvas-$(Version)-$(Codename).zip"
@@ -81,7 +83,7 @@ cake:
 	echo '/*! CAKE scene graph lib <http://code.google.com/p/cakejs/> \n    is released under the MIT License <http://www.opensource.org/licenses/mit-license.php>\n*/' > $(cakejs)
 	cp -f $(jooscript_js) $(fxcanvas_js) $(flash_backend_js) $(canvas_backend_js) $(demodir)/cakejs/bin
 	cp -f $(fxcanvas_swf) $(demodir)/cakejs/bin
-	java -jar $(compiler) --js $(cakesrc) --warning_level QUIET >> $(cakejs)
+	$(compiler) --js $(cakesrc) --warning_level QUIET >> $(cakejs)
 
 cake-zip:
 	make cake

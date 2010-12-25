@@ -5,21 +5,13 @@
  * Released under the MIT/X License
  */
 $Package("buz.util", function(__group__){
-  __group__["updateObject"] = function (obj, addMe) {
-    for(var x in addMe) {
-      if(!(x in Object.prototype)) { // filter out prototype additions from other potential libraries
-        if(x != "__w3c_fake" && x != "toString" && x != "valueOf") {// ... and some internals
-          obj[x] = addMe[x];
-        }
-      }
-    }
-  }; 
+
   // hello -> Hello
   __group__["capitalize"] = function (word) {
     return word.substr(0, 1).toUpperCase() + word.substr(1);
   };
 
-  var that = $Import({}, "browser");
+  var that = $Import({}, "platform");
 
 __group__.propertyChangeListener = function(el, property, func)
 {
@@ -29,7 +21,7 @@ __group__.propertyChangeListener = function(el, property, func)
             func(evt)
     }
 
-    if(that.browser.webkit) {
+    if(that.platform.webkit) {
         var prevValue = el[property]
         var newValue
         setInterval(function(){
