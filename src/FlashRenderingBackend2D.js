@@ -22,6 +22,15 @@ $Unit(__PATH__, __FILE__, function(unit, root, glob){
     "buz.util.*"
   );
 
+  // @fix (fxCanvas 0.15c)
+  // Create a dummy canvas element so that IE will allow canvas elements to be
+  // recognized.
+  root.createElement("canvas"); 
+
+  // setup default canvas style
+  root.createStyleSheet().cssText =
+    "canvas{display:inline-block;width:300px;height:150px;}";
+
   $Package("buz.fxcanvas.backend", function(group) {
 
     var slice = Array.prototype.slice, 
@@ -1242,6 +1251,8 @@ $Unit(__PATH__, __FILE__, function(unit, root, glob){
       return canvas;
     };
 
+    var defaultCanvasWidth = "300px", defaultCanvasHeight = "150px"
+
     // Second step,
     // this will initialize and add flash object to the canvas container
     //
@@ -1260,10 +1271,10 @@ $Unit(__PATH__, __FILE__, function(unit, root, glob){
       
       var stageWidth = width, stageHeight = height
 
-      if(cur_st && cur_st.width != "300px"){
+      if(cur_st && cur_st.width != defaultCanvasWidth){
         stageWidth = parseInt(cur_st.width)
       }
-      if(cur_st && cur_st.height != "150px"){
+      if(cur_st && cur_st.height != defaultCanvasHeight){
         stageHeight = parseInt(cur_st.height)
       }
       
@@ -1312,12 +1323,16 @@ $Unit(__PATH__, __FILE__, function(unit, root, glob){
       canvas.innerHTML = flobject;
       var flashObject = canvas.firstChild;
 
-      if(cur_st && cur_st.width != "300px"){
+      if(cur_st && cur_st.width != defaultCanvasWidth){
         flashObject.style.width = cur_st.width;
       }
-      if(cur_st && cur_st.height != "150px"){
+      if(cur_st && cur_st.height != defaultCanvasHeight){
         flashObject.style.height = cur_st.height;
       }
+
+      // Important!
+      canvas.style.width = width + "px"
+      canvas.style.height = height + "px"
 
       // call oncanvasresize if current dim deffer from inits
       if(initWidth != width || initHeight != height) {
@@ -1433,6 +1448,7 @@ $Unit(__PATH__, __FILE__, function(unit, root, glob){
           value = (prop == "width") ? 300 : 150;
         }
         backend._flobject[prop] = value
+        //canvas.style[prop] = value + "px"
         // call resizeCanvas() by interval to handle both width and height values
         clearTimeout(canvas._resizeIntId)
         //trace('onPropertyChange()', prop, value)
