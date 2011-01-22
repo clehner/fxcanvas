@@ -6,7 +6,7 @@
  */
 $Unit(__PATH__, __FILE__, function(unit, root, glob){
 
-  $Import(unit,
+  unit.Import(
     "platform",
     "geom.*", 
     "buz.fxcanvas.config"
@@ -24,7 +24,7 @@ $Unit(__PATH__, __FILE__, function(unit, root, glob){
     return [this[0], this[1], this[2], this[3], this[4], this[5]].join(",");
   };
 
-  $Package("buz.fxcanvas", function(group) {
+  unit.Package("buz.fxcanvas", function(group) {
 
     var slice = Array.prototype.slice;
 
@@ -62,7 +62,7 @@ $Unit(__PATH__, __FILE__, function(unit, root, glob){
       // path bounds
       this._bounds = new Bounds;
       // last added segment
-      this._xy0 = new unit.Point;
+      this._xy0 = unit.Point();
       this._tracePathBounds = unit.config.tracePathBounds;
       this._stateStack = [];
       this._pathStack = [];
@@ -76,7 +76,7 @@ $Unit(__PATH__, __FILE__, function(unit, root, glob){
 
       // sadly, setters and getters are not working in IE ..
       //
-      if (!this._isFlashBackend) {
+      if ( !unit.platform.isIE ) {
         for( var property in group.defProp) {
 
           // set property
@@ -260,7 +260,7 @@ $Unit(__PATH__, __FILE__, function(unit, root, glob){
         if (this._tracePathBounds) {
           // 
           var v1 = this._xy0.vectorTo(x, y),
-              v2 = (new unit.Point(x + (v1.x / 2), y + (v1.y / 2))).vectorTo(cpx, cpy);
+              v2 = (unit.Point(x + (v1.x / 2), y + (v1.y / 2))).vectorTo(cpx, cpy);
 
           this._bounds.addKnot(x + (v2.x / 2), y + (v2.y / 2));
           //this.__drawTestPoint(this._bounds.x0, this._bounds.y0, "c")
@@ -281,27 +281,27 @@ $Unit(__PATH__, __FILE__, function(unit, root, glob){
           //
           var Point = unit.Point,
               xy0 = this._xy0,
-              xy = new Point(x, y),
+              xy = Point(x, y),
               v1 = xy0.vectorTo(cp1x, cp1y),
               v2 = xy.vectorTo(cp2x, cp2y),
               v3 = xy0.vectorTo(x, y),
-              a = new Point(xy0.x + (v1.x/2), xy0.y + (v1.y/2)),
-              b = new Point(x + (v2.x/2), y + (v2.y/2)),
-              c = new Point(x + (v1.x/2) + (v2.x/2) - (v3.x/2), y + (v1.y/2) + (v2.y/2) - (v3.y/2)),
+              a = Point(xy0.x + (v1.x/2), xy0.y + (v1.y/2)),
+              b = Point(x + (v2.x/2), y + (v2.y/2)),
+              c = Point(x + (v1.x/2) + (v2.x/2) - (v3.x/2), y + (v1.y/2) + (v2.y/2) - (v3.y/2)),
               v4 = a.vectorTo(c),
               v5 = b.vectorTo(c),
-              d = new Point(a.x + (v4.x/2), a.y + (v4.y/2)),
-              e = new Point(b.x + (v5.x/2), b.y + (v5.y/2)),
+              d = Point(a.x + (v4.x/2), a.y + (v4.y/2)),
+              e = Point(b.x + (v5.x/2), b.y + (v5.y/2)),
               v6 = e.vectorTo(d.x, d.y),
-              f = new Point(e.x + (v6.x/2), e.y + (v6.y/2)),
+              f = Point(e.x + (v6.x/2), e.y + (v6.y/2)),
               v7 = xy0.vectorTo(a),
               v8 = xy.vectorTo(b),
-              g = new Point(xy0.x + (v7.x/2), xy0.y + (v7.y/2)),
-              h = new Point(x + (v8.x/2), y + (v8.y/2)),
+              g = Point(xy0.x + (v7.x/2), xy0.y + (v7.y/2)),
+              h = Point(x + (v8.x/2), y + (v8.y/2)),
               v9 = g.vectorTo(d),
               v10 = h.vectorTo(e),
-              i = new Point(g.x + (v9.x/2), g.y + (v9.y/2)),
-              j = new Point(h.x + (v10.x/2), h.y + (v10.y/2));
+              i = Point(g.x + (v9.x/2), g.y + (v9.y/2)),
+              j = Point(h.x + (v10.x/2), h.y + (v10.y/2));
 
           /** vizualise points **/
           /*
@@ -489,10 +489,10 @@ $Unit(__PATH__, __FILE__, function(unit, root, glob){
 
       "createImageData": function() {
         if (arguments[0] && arguments[1])
-          return new group.ImageData(arguments[0], arguments[1], null, this._useRawImageData);
+          return new ImageData(arguments[0], arguments[1], null, this._useRawImageData);
           //return this._backend.createImageData(arguments[0], arguments[1])
         else
-          return new group.ImageData(arguments[0], null, null, this._useRawImageData);
+          return new ImageData(arguments[0], null, null, this._useRawImageData);
           //return this._backend.createImageData(arguments[0])
       },
 
@@ -511,9 +511,9 @@ $Unit(__PATH__, __FILE__, function(unit, root, glob){
         }
         var rawData = this._backend.getImageData(sx, sy, sw, sh);
         if(this._useRawImageData)
-          return new group.ImageData(sw, sh, rawData);
+          return new ImageData(sw, sh, rawData);
         else
-          return (new group.ImageData(1, 1)).__fromCanvasData(rawData);
+          return (new ImageData(1, 1)).__fromCanvasData(rawData);
       },
 
       "putImageData": function(imageData, dx, dy, dirtyX, dirtyY, dirtyWidth, dirtyHeight) {
@@ -726,12 +726,12 @@ $Unit(__PATH__, __FILE__, function(unit, root, glob){
       this.knots = 0
     };
 
-    Bounds.prototype = new unit.Rectangle;
+    Bounds.prototype = unit.Rectangle();
 
     unit.object.extend(Bounds.prototype, 
     {
       "addKnot" : function (x, y) {
-        var v = (new unit.Point(this.x, this.y)).vectorTo(x, y)
+        var v = (unit.Point(this.x, this.y)).vectorTo(x, y)
 
         if(!this.knots) {
           this.x = x
@@ -781,9 +781,6 @@ $Unit(__PATH__, __FILE__, function(unit, root, glob){
     // I will use array W x H with encoded pixel values in 32-bit integers, 
     // it must help save some time/memory in conversions routines.
     
-    // ... it seems to be most compact and efficient data structure
-    //
-    
     // todo use typed arrays where possible
     //
     // The problem is order (big or little endian?) of bytes:
@@ -799,7 +796,8 @@ $Unit(__PATH__, __FILE__, function(unit, root, glob){
     /*
      *  class ImageData
      */
-    group.ImageData = function(width, height, initData, useRawImageData) {
+    function ImageData (width, height, initData, useRawImageData) {
+
       // fix for IE
       this.__useCache = false
       this.__pixel = useRawImageData && unit.platform.isIE ? 1 : 4;
@@ -821,7 +819,7 @@ $Unit(__PATH__, __FILE__, function(unit, root, glob){
         this.height = arguments[0].height;
       }
 
-      this.data = unit.VectorArray(this.width * this.height, unit.Uint, 32);
+      this.data = unit.VectorArray(this.width * this.height, unit.Uint(32));
       //this.data = new Array(this.width * this.height);
 
       // default data filled with black transparent 
@@ -830,7 +828,9 @@ $Unit(__PATH__, __FILE__, function(unit, root, glob){
           this.data[((y * this.width) + x)] = 0x00000000;
     };
 
-    group.ImageData.prototype = 
+    group.ImageData = ImageData
+
+    ImageData.prototype = 
     {
       // data structure is an array with pixel values encoded as integer
       //
@@ -908,7 +908,7 @@ $Unit(__PATH__, __FILE__, function(unit, root, glob){
       "__fromCanvasData" : function (rawData) {
         this.width = rawData.width;
         this.height = rawData.height;
-        this.data = unit.VectorArray(this.width * this.height, unit.Uint, 32);
+        this.data = unit.VectorArray(this.width * this.height, unit.Uint(32));
         //this.data = new Array(this.width * this.height);
         var ofs, red, green, blue, alpha;
         for (var y = 0; y < this.height; y++) 
@@ -937,7 +937,7 @@ $Unit(__PATH__, __FILE__, function(unit, root, glob){
       },
 
       "clone" : function(){
-        var buf = new group.ImageData(this.width, this.height)
+        var buf = new ImageData(this.width, this.height)
 
         //for (var i=0; i<buf.data.length; i++)
           //buf.data[i] = this.data[i]

@@ -17,12 +17,11 @@
 */
 $Unit(__PATH__, __FILE__, function(unit, root, glob){
 
-  $Import(unit, 
+  unit.Import(
     "buz.fxcanvas.*", 
     "buz.util.*"
   );
 
-  // @fix (fxCanvas 0.15c)
   // Create a dummy canvas element so that IE will allow canvas elements to be
   // recognized.
   root.createElement("canvas"); 
@@ -31,7 +30,7 @@ $Unit(__PATH__, __FILE__, function(unit, root, glob){
   root.createStyleSheet().cssText =
     "canvas{display:inline-block;width:300px;height:150px;}";
 
-  $Package("buz.fxcanvas.backend", function(group) {
+  unit.Package("buz.fxcanvas.backend", function(group) {
 
     var slice = Array.prototype.slice, 
         last = function () { return this[this.length - 1]; };
@@ -57,7 +56,8 @@ $Unit(__PATH__, __FILE__, function(unit, root, glob){
         },
 
         // Returns canvas shot in `data` URI format.
-        // Note: data URI not supported in IE natively, but it can be drawn on canvas element.
+        // Note: data URI not supported in IE less than 8 natively, 
+        // but it can be drawn on canvas element.
         "toDataURL" : function(type) {
           var args = arguments, 
               qual = args.length == 3 ? parseFloat(args[args.length-2]) : 0,
@@ -81,9 +81,7 @@ $Unit(__PATH__, __FILE__, function(unit, root, glob){
 
         // Assets loaders
         //
-        // fixme sometime onload event is not triggered by unknown reasons when 
-        // images are loaded from URL (test: 3_4_canvas_gallery)
-        "loadImage" : function() {
+        "loadImages" : function() {
           if (!arguments.length) return;
 
           var args = slice.call(arguments, 0),
@@ -133,7 +131,7 @@ $Unit(__PATH__, __FILE__, function(unit, root, glob){
                 canvas.onload(image);
 
               if (args.length)
-                canvas.loadImage.apply(canvas, args);
+                canvas.loadImages.apply(canvas, args);
 
             }]);
           }
@@ -147,17 +145,17 @@ $Unit(__PATH__, __FILE__, function(unit, root, glob){
                   canvas.onload(image);
                 }
                 if (args.length)
-                  canvas.loadImage.apply(canvas, args);
+                  canvas.loadImages.apply(canvas, args);
               }]);
             };
             // load in browser (image will be cached and instantly loaded by flash)
             image.src = src;
           }
         },
-        "loadFont" : function() {
+        "loadFonts" : function() {
           // todo
         },
-        "loadVideo" : function() {
+        "loadVideos" : function() {
           // todo
         }
       },
@@ -886,7 +884,7 @@ $Unit(__PATH__, __FILE__, function(unit, root, glob){
       },
 
       // fxCanvas is using asynchronous communications with flash, it means
-      // that you must pass some frames, till value returned.
+      // that you have to pass some frames, till value returned.
       "_invoke" : function(_args) {
         var args = slice.call(_args, 1, _args.length-1),
             invokedCmd = _args[0],
@@ -1211,6 +1209,7 @@ $Unit(__PATH__, __FILE__, function(unit, root, glob){
       // mimic standards behavior
       w3c(canvas);
 
+      // flash commands handler
       canvas._fscmd = function (cmd) 
       {
         var backend = this.getBackend("2d");
@@ -1237,6 +1236,7 @@ $Unit(__PATH__, __FILE__, function(unit, root, glob){
           unit.throwError(this._data.args)
         } 
         //else if (cmd == 'focus') { }
+        else if (cmd == com_dummy) { }
         else
           unit.throwError("Unknown command " + cmd)
 
@@ -1270,6 +1270,9 @@ $Unit(__PATH__, __FILE__, function(unit, root, glob){
       var cur_st = canvas.currentStyle
       
       var stageWidth = width, stageHeight = height
+
+      // I'm not sure how flash resizing actually works ... 
+      // i get to it by trial and errors ...
 
       if(cur_st && cur_st.width != defaultCanvasWidth){
         stageWidth = parseInt(cur_st.width)
@@ -1393,6 +1396,9 @@ $Unit(__PATH__, __FILE__, function(unit, root, glob){
         document.detachEvent("oncontextmenu", canvas._onContextMenu);
         document.detachEvent("onmousedown", canvas._onMouseDown);
       };
+
+      // todo (maybe impossible) return focus to html element, not flash,
+      // after switching active window
 
       /*
       function onDocumentEnter () {

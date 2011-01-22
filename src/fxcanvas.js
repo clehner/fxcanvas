@@ -16,7 +16,7 @@ $Unit(__PATH__, __FILE__, function(unit, root, glob){
   unit.Import("buz.fxcanvas.config", "platform", "w3c.DOMException");
 
   // common stuff
-  $Package("buz.fxcanvas", function (group) {
+  unit.Package("buz.fxcanvas", function (group) {
 
     group.throwException = function(s) {
       //trace(s.toString())

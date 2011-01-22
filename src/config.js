@@ -8,7 +8,7 @@ $Unit(__PATH__, __FILE__, function(unit)
 {
   unit.Import("platform");
 
-  $Package("buz.fxcanvas.config", function(config) {
+  unit.Package("buz.fxcanvas.config", function(config) {
 
     // Initialize after content was loaded to using the script inside Workers ...
     unit.Event.once("initialize", function(){

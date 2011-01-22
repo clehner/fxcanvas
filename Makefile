@@ -1,6 +1,6 @@
 Project  = fxCanvas
 projURL  = http://code.google.com/p/fxcanvas/
-Version  = 0.2(beta3)
+Version  = 0.2(beta4)
 Codename = supersonic
 Date     = $(shell date '+%Y%m%d')
 Year     = $(shell date '+%Y')
@@ -68,9 +68,9 @@ $(canvas_backend_js): $(canvas_backend)
 zip:
 	rm -rf "$(archives)/fxcanvas-$(Version)-$(Codename).zip"
 	zip -r "$(archives)/fxcanvas-$(Version)-$(Codename).zip" \
-		src demo docs tests \
+		demo docs \
 		-i "*.js" "*.as" "*.swf" "*.jpg" "*.gif" "*.png" "*.htm?" "*.css" "*.php" README -x "demo/cakejs*"
-	zip -r "$(archives)/fxcanvas-$(Version)-$(Codename).zip" $(fxcanvas_swf) $(jooscript_js) $(fxcanvas_js) $(flash_backend_js) $(canvas_backend_js) ReadMe.html Makefile debug.php save.php view.php proxy.php
+	zip -r "$(archives)/fxcanvas-$(Version)-$(Codename).zip" $(fxcanvas_swf) $(jooscript_js) $(fxcanvas_js) $(flash_backend_js) $(canvas_backend_js) ReadMe.html debug.php save.php view.php proxy.php
 
 cake:
 	# CAKE does not included in archive due to big size of it. 

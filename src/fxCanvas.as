@@ -325,6 +325,7 @@ package {
         {
             if (root.loaderInfo.parameters[com.ready] == undefined)
                 return
+
             removeEventListener("enterFrame", listen)
             addEventListener("enterFrame", onFrame)
         }
@@ -390,7 +391,6 @@ package {
                 return
             }
 
-
             wakeUp();
 
             bufLen = parseInt(buf.l)
@@ -404,6 +404,7 @@ package {
                 _exception = e.toString() //+ "\n" + buf.c //+ "\n" + _callStack ; 
                 //log(e.getStackTrace())
             }
+
         }
 
         // wake up!
@@ -802,12 +803,12 @@ package {
                 }
 
                 if(queueId > -1)
-                    _queue[queueId] = [
+                    _queue.push([
                         queueId,
                         [img.contentType, img.width, img.height, img.url].join(argEnd)
-                    ];
+                    ]);
 
-                //log([queueId, img.width, img.height, img.url])
+                //log(["!", queueId, img.width, img.height, img.url])
             }
         }
 

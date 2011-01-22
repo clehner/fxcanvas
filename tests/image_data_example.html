@@ -61,7 +61,7 @@ onload = function () {
                         // draw data uri
                         this.getContext("2d").drawImage(img, 0, 0);
                       }
-                      canvas.loadImage(jpeg_data);
+                      canvas.loadImages(jpeg_data);
                   };
                   // Firefox throws an exception if called with quality argument
                   try{
@@ -76,18 +76,18 @@ onload = function () {
                     // draw data uri
                     this.getContext("2d").drawImage(img, 0, 0);
                   }
-                  canvas.loadImage(png_data);
+                  canvas.loadImages(png_data);
                 });
               });
             }
-            ctx.canvas.loadImage(document.getElementById("cv2"))
+            ctx.canvas.loadImages(document.getElementById("cv2"))
           });
         });
       });
     }
   }
   // load image
-  canvas.loadImage(im_src);
+  canvas.loadImages(im_src);
 }
   </script>
   <style>

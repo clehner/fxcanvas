@@ -6,7 +6,6 @@
     <comment><script type="text/javascript" src="../canvas_backend.js"></script></comment>
     <script type="text/javascript" src="web-forkers.js"></script>
     <script type="text/javascript" src="colorize.js"></script>
-    <script type="text/javascript" src="forker_helpers.js"></script>
     <script type="text/javascript">
 
         var output, imageData;
@@ -21,7 +20,7 @@
             colorTone.onload = function(img) {
                 colorToneGrad = img
             }
-            colorTone.loadImage("color-tone.png")
+            colorTone.loadImages("color-tone.png")
 
             var satValue = 0
             var hueValue = 0
@@ -96,7 +95,7 @@
                 })
 
             }
-            output.loadImage(sampleImage)
+            output.loadImages(sampleImage)
 
             var hueCanvas = document.getElementById("tone")
             var satCanvas = document.getElementById("saturation")
@@ -226,9 +225,9 @@
             return ["rgb(",[red,green,blue].join(","),")"].join("");
         };
 
-        $Import("forker_helpers.*")
-
         function doColorize () {
+
+            $Import("buz.fxcanvas")
 
             var ctx = output.getContext("2d")
 
@@ -244,20 +243,33 @@
                 forker.rawData = true
 
                 forker.onmessage = function(e) {
+
                     var buf = e.data
-                    //trace("message", buf)
+
                     if(typeof buf == "string" && buf == "ok") {
 
-                        buf = ImageData2JSON(imageData.clone())
-                        //trace("in", buf.substr(0, 100))
+                        buf = imageData.clone()
 
                         if(imageData)
-                            forker.postMessage(buf)
+                            // try to convert buf into string if object serialization 
+                            // is not supported by Worker
+                            try{
+                                forker.postMessage(buf)
+                            }catch(e){
+                                //trace("in", buf.substr(0, 100))
+                                forker.postMessage(ImageData2JSON(buf))
+                            }
                     }
                     else {
 
-                        //trace("out", buf.substr(0, 100))
-                        buf = JSON2ImageData(buf)
+                        // buffer is a string, convert it into image data
+                        if( typeof buf === "string" ) {
+                            //trace("out", buf.substr(0, 100))
+                            buf = JSON2ImageData(buf)
+                        }
+
+                        // fxCanvas is using own image data format ...
+                        buf = new fxcanvas.ImageData(buf.width, buf.height, buf.data)
                             
                         ctx.invoke("putImageData", buf, 0, 0, function(){
                             forker.terminate()

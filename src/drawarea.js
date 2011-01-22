@@ -10,7 +10,7 @@ $Unit(__PATH__, __FILE__, function(unit)
 {
   unit.Import("geom.*", "platform" );
 
-  $Package("buz.fxcanvas.test", function(group)
+  unit.Package("buz.fxcanvas.test", function(group)
   {
     var ctx, canvas, 
         knot = 0,

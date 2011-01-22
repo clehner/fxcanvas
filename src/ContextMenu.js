@@ -7,9 +7,9 @@
  */
 $Unit(__PATH__, __FILE__, function(unit, doc)
 {
-  $Import(unit, "platform");
+  unit.Import("platform");
 
-  $Package("buz.fxcanvas", function(group) {
+  unit.Package("buz.fxcanvas", function(group) {
     
     if(!unit.platform.isIE) return;
 

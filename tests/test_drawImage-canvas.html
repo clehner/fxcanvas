@@ -38,7 +38,7 @@
           ctx3.drawImage(cv, offs, offs, 50, 50)
           offs += 50
         }
-        cv3.loadImage(cv0, cv1, cv2)
+        cv3.loadImages(cv0, cv1, cv2)
 
         function drawRect(rect) {
           this.getContext("2d").drawImage(rect, 50, 50, 100, 100)
@@ -47,17 +47,17 @@
         ctx0.globalAlpha = globAlpha
         ctx0.globalCompositeOperation = "lighter"
         cv0.onload = drawRect
-        cv0.loadImage(cv2)
+        cv0.loadImages(cv2)
 
         ctx1.globalAlpha = globAlpha
         ctx1.globalCompositeOperation = "lighter"
         cv1.onload = drawRect
-        cv1.loadImage(cv0)
+        cv1.loadImages(cv0)
 
         ctx2.globalAlpha = globAlpha
         ctx2.globalCompositeOperation = "lighter"
         cv2.onload = drawRect
-        cv2.loadImage(cv3)
+        cv2.loadImages(cv3)
       }
     </script>
   </head>

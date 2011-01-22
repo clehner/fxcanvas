@@ -285,7 +285,7 @@ function construct_render_func(
         body += "           ctx.drawImage(helpercanvas, 0, 0);";
         body += "           ready=true";
         body += "        };";
-        body += "        ctx.canvas.loadImage(helpercanvas);";
+        body += "        ctx.canvas.loadImages(helpercanvas);";
         body += "}";
     }
     return new Function("ctx, x1, y1, x2, y2", body);

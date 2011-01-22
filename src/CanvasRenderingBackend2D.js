@@ -6,13 +6,13 @@
  */
 $Unit(__PATH__, __FILE__, function(unit, root, glob){
 
-  $Import(unit,
+  unit.Import(
     "buz.util.*",
     "buz.fxcanvas.*",
     "joo.object"
   );
 
-  $Package("buz.fxcanvas.backend", function(group) {
+  unit.Package("buz.fxcanvas.backend", function(group) {
 
     var slice = Array.prototype.slice;
 
@@ -96,7 +96,7 @@ $Unit(__PATH__, __FILE__, function(unit, root, glob){
         return null;
       };
 
-      canvas.loadImage = function () {
+      canvas.loadImages = function () {
         if (!arguments.length) return;
         var args = slice.call(arguments, 0), 
             canvas = this;
@@ -110,7 +110,7 @@ $Unit(__PATH__, __FILE__, function(unit, root, glob){
             canvas.onload(arg);
           }
           if (args.length)
-            canvas.loadImage.apply(canvas, args);
+            canvas.loadImages.apply(canvas, args);
         }
         else {
           var img = new Image();
@@ -120,7 +120,7 @@ $Unit(__PATH__, __FILE__, function(unit, root, glob){
               canvas.onload(img);
             }
             if (args.length)
-              canvas.loadImage.apply(canvas, args);
+              canvas.loadImages.apply(canvas, args);
           }
           img.src = src;
         }

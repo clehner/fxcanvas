@@ -1,8 +1,7 @@
 
 // todo moving this demo into fxcanvas/demo/colorize folder
 if(self.importScripts) {
-  importScripts("forker_helpers.js")
-  $Import(self, "forker_helpers.*")
+  self.importScripts("web-forkers.js")
 }
 
 self.saturation = .5
@@ -14,14 +13,17 @@ if(self.addEventListener) {
 
       //trace("forker gave message", e.data)
       var buf = e.data
-      if(typeof buf == "string" && buf.indexOf("args") > -1) {
+      if(typeof buf == "string" && buf.substr(0,4) == "args") {
           var config = buf.split(";")
           self.saturation = Number(config[1])
           self.colorTone = Number(config[2])
           self.postMessage("ok");
       }
       else {
-        self.postMessage(colorize(self.JSON2ImageData(buf)));
+        if( typeof buf == "string" ) 
+            self.postMessage(ImageData2JSON(colorize(JSON2ImageData(buf))));
+        else
+            self.postMessage(colorize(buf));
       }
             
 
