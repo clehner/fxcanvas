@@ -106,7 +106,7 @@
                 var hueX = self.colorTone / 360 * hueCanvas.width
                 //trace(hueX)
 
-                hue_ctx.clear()
+                hue_ctx.clearRect(0,0,hue_ctx.canvas.width,hue_ctx.canvas.height)
                 hue_ctx.drawImage(colorToneGrad, 0, 0)
                 hue_ctx.strokeStyle = "white"
                 hue_ctx.lineWidth = 6
@@ -125,7 +125,7 @@
 
                 var satX = self.saturation * satCanvas.width
 
-                sat_ctx.clear()
+                sat_ctx.clearRect(0,0,sat_ctx.canvas.width,sat_ctx.canvas.height)
 
                 var satgrad = sat_ctx.createLinearGradient(0,0,satCanvas.width,0);  
                 satgrad.addColorStop(0, '#ccc');  

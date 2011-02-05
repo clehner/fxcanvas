@@ -16,16 +16,28 @@
             ctx.lineWidth = "1";
             ctx.strokeStyle = "rgb(0, 0, 0)";
 
-            for(var i = 0; i < 50; i++) {
-              ctx.save();
-              ctx.beginPath();
-              ctx.strokeStyle = "rgb("+ rand(2, 255) +", "+ rand(2, 255) +", "+ rand(2, 255) +")";
-              //ctx.arc(i+(i*9), i+(i*9), i*2, 0, 360, false);
-              ctx.translate(i+(i*9), i+(i*9))
-              ctx.arc(0, 0, i*2, 0, 360, false);
-              ctx.stroke();
-              ctx.restore();
+            var sweep = 0,
+                clockwise = true;
+
+            function drawCircles(){
+                ctx.clearRect(0,0,canvas.width, canvas.height)
+                ctx.save();
+                ctx.translate(300, 300)
+                for(var i = 0; i < 100; i++) {
+                  ctx.beginPath();
+                  ctx.strokeStyle = "rgb("+ rand(2, 255) +", "+ rand(2, 255) +", "+ rand(2, 255) +")";
+                  var e = sweep*(Math.PI/180)
+                  ctx.arc(0, 0, i*2, 0, e, clockwise);
+                  ctx.stroke();
+                }
+                ctx.restore();
+                if(sweep == 360) {
+                    clockwise = !clockwise   
+                    sweep = 10
+                } else
+                    sweep += 10
             }
+            canvas.oncanvasframe = drawCircles
         }
     </script>
     <style>

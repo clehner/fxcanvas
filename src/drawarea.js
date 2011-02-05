@@ -24,7 +24,8 @@ $Unit(__PATH__, __FILE__, function(unit)
         mouse = new unit.Point(0, 0),
         transform = {tx:0, ty:0, rotate:0, scale:0},
         pointInPath = false,
-        testPointInPath = false;
+        testPointInPath = false,
+        accurate = false;
 
     var fillStyle = "rgba(255,255,255,.3)",
         fillStyleInPath = "rgba(255,102,102,.7)",
@@ -55,17 +56,34 @@ $Unit(__PATH__, __FILE__, function(unit)
         knots += 1
     }
 
+    function getRot(v){
+        var rot = Math.atan2(v.y,v.x)
+        return rot > 0 ? rot : (Math.PI*2)+rot 
+    }
+
     function setKnot(p) {
         var args;
         if (grab) {
             args = path[grab[0]][1]
-            args[grab[1]] = p.x
-            args[grab[1]+1] = p.y
+            var q = grab[1]
+            if( q == "startAngle") {
+                var v = unit.Point(args[0], args[1]).vectorTo(p.x, p.y)
+                args.startAngle = getRot(v);
+                return {x: args[0] + v.x, y: args[1] + v.y}
+            } else if( q == "endAngle") {
+                var v = unit.Point(args[0], args[1]).vectorTo(p.x, p.y)
+                args.endAngle = getRot(v);
+                return {x: args[0] + v.x, y: args[1] + v.y}
+            } else {
+                args[q] = p.x
+                args[q+1] = p.y
+            }
         } else {
             args = path[knot][1]
             args[args.length-1] = p.y
             args[args.length-2] = p.x
         }
+        return p
     }
 
     function drawGrid() {
@@ -109,17 +127,21 @@ $Unit(__PATH__, __FILE__, function(unit)
 
         ctx.setFillStyle(style || "rgba(178, 255, 0, .8)")
             .beginPath()
+            // visual point
             .rect(p.x - (w / 2), p.y - (h / 2), w, h)
             .fill()
+            // invisible hook
             .rect(p.x - (hook_width / 2), p.y - (hook_height / 2), hook_width, hook_height)
     };
 
+    // colors
+    var blue = "rgba(76, 0, 255, .8)", // blue
+        pink = "rgba(255, 51, 102, .8)", // pink
+        green = "rgba(51, 255, 51, .8)", // green
+        orange = "rgba(255, 153, 51, .8)"; // orange
+
     function drawControlPoints() {
-        var i, st, a, c, l, q,
-            blue = "rgba(76, 0, 255, .8)", // blue
-            pink = "rgba(255, 51, 102, .8)", // pink
-            green = "rgba(51, 255, 51, .8)", // green
-            orange = "rgba(255, 153, 51, .8)"; // orange
+        var i, st, a, c, l, q;
 
         ctx.strokeStyle = "rgba(175, 178, 171, .8)"
         ctx.lineWidth = 1
@@ -149,8 +171,31 @@ $Unit(__PATH__, __FILE__, function(unit)
                         if (l == 6) st = pink
                     default:
                 }
+                if( c == "arc" && l == 4) {
+                    var x = a[0],
+                        y = a[1],
+                        rx = a[2],
+                        ry = a[3],
+                        startAngle = a.startAngle,
+                        endAngle = a.endAngle,
+                        v = new unit.Point(x, y).vectorTo(rx, ry),
+                        r = Math.sqrt(v.x*v.x + v.y*v.y);
+
+                    var p1 = new unit.Point(x+r*Math.cos(startAngle), y+r*Math.sin(startAngle)),
+                        p2 = new unit.Point(x+r*Math.cos(endAngle), y+r*Math.sin(endAngle));
+
+                    drawKnot(p1, 5, 5, pink)
+                    if( ctx.isPointInPath(mouse) && !grab ) {
+                        grab = [i, "startAngle"]
+                    }
+                    drawKnot(p2, 5, 5, orange)
+                    if( ctx.isPointInPath(mouse) && !grab ) {
+                        grab = [i, "endAngle"]
+                    }
+                    //drawKnot(p2)
+                }
                 drawKnot(p, 5, 5, st)
-                if (ctx.isPointInPath(mouse)) {
+                if ( ctx.isPointInPath(mouse) && !grab) {
                     grab = [i, q]
                 }
                 x0 = a[q]
@@ -159,7 +204,7 @@ $Unit(__PATH__, __FILE__, function(unit)
         }
     };
 
-    function draw(mouse) {
+    function draw(mouse, hitTest) {
         //console.log(path.length)
         if (!path.length) return;
         ctx.save();
@@ -207,10 +252,13 @@ $Unit(__PATH__, __FILE__, function(unit)
                             y = a[1],
                             rx = a[2],
                             ry = a[3],
+                            startAngle = a.startAngle,
+                            endAngle = a.endAngle,
+                            clockwise = a.clockwise,
                             p = new unit.Point(x, y),
                             v = p.vectorTo(rx, ry),
-                            r = Math.sqrt(v.x * v.x + v.y * v.y),
-                            args = [x, y, r, 0, 360 * Math.PI/180, false];
+                            r = Math.sqrt(v.x*v.x + v.y*v.y),
+                            args = [x, y, r, startAngle, endAngle, !clockwise];
                         break;
                     case "rect":
                         if (a.length < 4) break drawPath;
@@ -227,16 +275,37 @@ $Unit(__PATH__, __FILE__, function(unit)
                 ctx[c].apply(ctx, args)
             }
 
-        var pointInPath = testPointInPath && ctx.isPointInPath(mouse._x, mouse._y);
-        ctx.setFillStyle(pointInPath ? fillStyleInPath : fillStyle)
-            .setStrokeStyle(strokeStyle)
-            .setLineWidth(lineWidth)
-            .stroke()
-            .fill();
+        if( testPointInPath ) {
+            if( accurate )  {
+                if( hitTest != undefined) {
+                    drawShape(hitTest ? fillStyleInPath : fillStyle)
+                }
+                else {
+                    ctx.invoke("isPointInPath", mouse._x, mouse._y, function(hit){
+                        draw(mouse, hit)
+                    })
+                }
+                ctx.restore();
+                return
+            } else {
+                var pointInPath = ctx.isPointInPathBounds(mouse._x, mouse._y);
+                drawShape(pointInPath ? fillStyleInPath : fillStyle)
+            }
+        } else {
+            drawShape(fillStyle)
+        }
 
         drawBoundingBox(mouse);
 
         ctx.restore();
+    }
+
+    function drawShape(fillStyle) {
+        ctx.setFillStyle(fillStyle)
+            .setStrokeStyle(strokeStyle)
+            .setLineWidth(lineWidth)
+            .stroke()
+            .fill();
     }
 
     function getRelativeCoords (p, element, event) {
@@ -305,6 +374,12 @@ $Unit(__PATH__, __FILE__, function(unit)
                     knots = 0
                     if (path.length) knot += 1
                     path[knot] = [cmd, []]
+                    if( cmd == "arc" ) {
+                        var clockwise = document.getElementById("clockwise").checked
+                        path[knot][1].clockwise = clockwise
+                        path[knot][1].startAngle = 0
+                        path[knot][1].endAngle = 360*(Math.PI/180)
+                    }
                 }
             }, false);
         }
@@ -330,6 +405,24 @@ $Unit(__PATH__, __FILE__, function(unit)
             if (mouseDown) changed = true;
         }, false);
 
+        w3c(window)
+
+        window.addEventListener("keydown", function (e) {
+            var keyCode = e.keyCode
+            if(keyCode == 16 || keyCode == 90) {
+                testPointInPath = true;
+                accurate = keyCode == 90
+                e.preventDefault()
+            }
+        }, false);
+
+        window.addEventListener("keyup", function (e) {
+            accurate = testPointInPath = false;
+            draw(mouse);
+            drawControlPoints();
+            changed = true;
+        }, false);
+
         canvas.addEventListener("mousedown", function (e) {
             getRelativeCoords(mouse, this, e);
             var m_ = ctx.transformMatrix
@@ -340,15 +433,14 @@ $Unit(__PATH__, __FILE__, function(unit)
             m.scale(transform.scale, transform.scale)
             m.rotate(transform.rotate)
 
-            if (e.shiftKey) {
-                testPointInPath = true;
+            if (testPointInPath) {
                 draw(mouse);
                 var p = m_.multiplyPoint(mouse);
                 drawKnot(p, 5, 5, "red")
                 return
             }
             
-            testPointInPath = false;
+            //testPointInPath = false;
             if (!cmd) return;
             grab = null
             mouseDown = true
@@ -375,8 +467,7 @@ $Unit(__PATH__, __FILE__, function(unit)
             draw(mouse);
             drawControlPoints()
             if (mouseDown && path.length) {
-                setKnot(mouse)
-                drawKnot(mouse)
+                drawKnot(setKnot(mouse))
             }
             changed = false;
         };

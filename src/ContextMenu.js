@@ -42,6 +42,8 @@ $Unit(__PATH__, __FILE__, function(unit, doc)
         "zIndex:999;",
         "float:none;",
         "overflow:visible;",
+        "text-align:left;",
+        "max-width: 300px;",
         "display:block;",
         "clear:both;",
         "color:", defStyle.menuText, ";",

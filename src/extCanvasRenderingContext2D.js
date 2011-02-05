@@ -47,7 +47,6 @@ $Unit(__PATH__, __FILE__, function(unit, root, glob){
     //   public method createPath()
     //   public method appendPath()
     //   public method clonePath()
-    //   public method clear()
     // 
 
     // class extCanvasRenderingContext2D
@@ -243,6 +242,7 @@ $Unit(__PATH__, __FILE__, function(unit, root, glob){
         return this;
       },
 
+      /*
       "__drawTestPoint" : function (x, y, text) {
           this.fillStyle = "grey"
           var s = 5;
@@ -251,6 +251,7 @@ $Unit(__PATH__, __FILE__, function(unit, root, glob){
           if (text)
             this.fillText(text, x + 5, y + 5)
       },
+      */
 
       "quadraticCurveTo": function(cpx, cpy, x, y) {
 
@@ -697,13 +698,8 @@ $Unit(__PATH__, __FILE__, function(unit, root, glob){
           this.strokeStyle = this.__rgbStyle(r,g,b); 
           return this
       },
-      // complete clear the canvas
-      "clear" : function () { 
-          this.clearRect(0, 0, this.canvas.width, this.canvas.height)
-          return this
-      },
 
-      // back reference to prototype
+      // back reference to constructor
       "constructor" : group.extCanvasRenderingContext2D
     };
 

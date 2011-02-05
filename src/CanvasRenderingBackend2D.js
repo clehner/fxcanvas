@@ -149,8 +149,40 @@ $Unit(__PATH__, __FILE__, function(unit, root, glob){
         if (!oncanvasframe) {
           this.__onFrame = null;
         } else {
-          this.__onFrame = oncanvasframe;
-          this.__frameIntId = setInterval(this.__onFrame, this.__frameDuration, 0);
+          var that = this
+          var start = new Date
+          that.__onFrame = oncanvasframe;
+          // use new vendors approaches if available 
+          // http://nokarma.org/2010/02/02/javascript-game-development-the-game-loop/
+          var requestAnimationFrame;
+          var _cb = function() {
+            if( that.__onFrame ) {
+              // redraw only if time interval is less or equal to frame duration
+              if( new Date-start >= that.__frameDuration ) {
+                //trace(new Date-start, that.__frameDuration)
+                that.__onFrame(); 
+                start = new Date
+              }
+              requestAnimationFrame(_cb);  
+            }
+          }
+          // used by WebKi
+          if (glob.webkitRequestAnimationFrame) {
+            requestAnimationFrame = glob.webkitRequestAnimationFrame;
+
+          // used by Mozzila
+          } else if (glob.mozRequestAnimationFrame) {
+            requestAnimationFrame = glob.mozRequestAnimationFrame;
+
+          // fallback for others
+          } else {
+            requestAnimationFrame = function(){
+              // 10 frames per second is probably a minimum, less value will 
+              // not give any effect
+              that.__frameIntId = setTimeout(_cb, 10);
+            }
+          }
+          _cb();
         }
       });
       canvas.__defineGetter__("oncanvasframe", function() {
@@ -221,9 +253,9 @@ $Unit(__PATH__, __FILE__, function(unit, root, glob){
       if(params.oncanvasframe) 
         canvas.oncanvasframe = params.oncanvasframe;
 
-      window.__canvasElement[unit.lastCanvasID++] = canvas;
+      glob.__canvasElement[unit.lastCanvasID++] = canvas;
     };
 
-    window.__canvasElement = [];
+    glob.__canvasElement = [];
   });
 });

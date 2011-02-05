@@ -292,8 +292,6 @@ package {
             //log("id:"+lc_id)
             //log("d:"lc.domain)
 
-            //log([_width, _width].join("x"))
-
             init(_width, _height);
         }
 
@@ -349,7 +347,7 @@ package {
 
             spr.addChild(canvas);
             
-            //log([canvasId, [width, height].join("x"), stage.frameRate + "fps"].join(", ") )
+            //log([canvasId, [width, height].join("x"), "@"+workFrameRate].join(", ") )
         }
 
         // todo serialize result queue into single string
@@ -506,6 +504,7 @@ package {
                     __setFrameRate(uint(getInt()));
                     break;
                 default:
+                    argPos = 0
                     if(queueId > -1)
                         return this[fun](queueId);
                     return this[fun]();
@@ -627,6 +626,9 @@ package {
                     // set src as relative path if hostname is the same
                     if(src.indexOf(host_addr) === 0) {
                         src = src.substr(host_addr.length)
+                        // quick fix for ports
+                        if(/^:\d+/.test(src))
+                            src = host_addr + src
                     }
                     // If the file is in other domain
                     else if (/^https?:\/\//.test(src))
@@ -1199,9 +1201,21 @@ package {
         }
 
         private function isPointInPath():String {
-            var x:Number = getInt();
-            var y:Number = getInt();
-            if (ctx.isPointInPath(x, y)) 
+            var x:Number = getFloat();
+            var y:Number = getFloat();
+            
+            // create temp shape
+            var tmpShape:Shape = new Shape()
+            // it have to be filled
+            tmpShape.graphics.beginFill(0xFFFFFF);
+            ctx.path.draw(tmpShape.graphics)
+            // required to placed it on the stage
+            addChild(tmpShape)
+            var hitShape:Boolean = tmpShape.hitTestPoint(x, y, true)
+            // remove it
+            removeChild(tmpShape)
+
+            if (hitShape) 
                 return "1";
             else
                 return "0";
@@ -1217,8 +1231,10 @@ package {
         // ==================================
         // parser
         //
+        private var argPos:int = 0;
         private function parseCmd():String
         {
+            argPos = 0
             var cmd:String = getNextChar();
             if (!cmdName[cmd])
                 throw err("Unknown command " + cmd)
@@ -1253,17 +1269,28 @@ package {
 
         private function getInt():Number
         {
-            var x:int = parseInt(getNumber());
+            var n:String = getNumber();
+            var x:int = parseInt(n);
+            if( isNaN(x) )
+                throw err("Unexpected number")
+                //_exception = "Unexpected int value " + 
+                                //"["+[cmdName[_cmd],argPos]+"]";
             return x;
         }
 
         private function getFloat():Number
         {
-            var x:Number = parseFloat(getNumber());
+            var n:String = getNumber();
+            var x:Number = parseFloat(n);
+            if( isNaN(x) )
+                throw err("Unexpected number")
+                //_exception = "Unexpected float value " +
+                                //"["+[cmdName[_cmd],argPos]+"]";
             return x;
         }
 
         private function getArgEnd():void {
+            argPos++
             var next:String = getNextChar();
             if (next != argEnd)
                 throw err("Unexpected tail of the argument")
@@ -1306,7 +1333,10 @@ package {
         }
 
         private function err(prx:String = "Parse error: "):Error {
-            var errMsg:String = " [" + cmdName[_cmd ]+ "," + bufCursor + "," + buf.c.length + "] " + buf.c.substring(bufCursor > 0 ? bufCursor - 1 : 0, bufCursor+20) + "...";
+            var errMsg:String = " [" + cmdName[_cmd ]+ "," + argPos + "," + 
+                                    bufCursor + "," + buf.c.length + "] " + 
+                                    buf.c.substring(bufCursor > 0 ? bufCursor - 1 : 0, bufCursor+20) + 
+                                    "...";
             return new Error(prx +  errMsg);
         }
 

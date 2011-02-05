@@ -67,13 +67,14 @@
     <button id="bezierCurveTo_3">bezier...To</button>
     <button id="arcTo_2">arcTo</button>
     <button id="arc_2">arc</button>
+    <input type="checkbox" id="clockwise" title="clockwise" value="1" checked />
     <button id="rect_2">rect</button>
     translate: <input type="text" id="translate_x" value="0" onkeyup="transform_();"/>, <input type="text" id="translate_y" value="0" onkeyup="transform_();"/>
     rotate: <input type="text" id="rotate" value="0" onkeyup="transform_();"/>
     scale: <input type="text" id="scale" value="1" onkeyup="transform_();"/>
   </div>
   <canvas id="drawarea" width="800" height="600" frameDuration="10" tracePathBounds="true"></canvas>
-  <div>Shift-click to test if point in path or in bounding box</div>
+  <div>Shift-click to test if point in path or in bounding box (Shift-Z for accurate test)</div>
 </body>
 </html>
 

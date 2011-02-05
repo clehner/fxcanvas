@@ -1,7 +1,8 @@
 /*
  * FlashCanvas
  *
- * Copyright (c) 2009 Shinya Muramatsu
+ * Copyright (c) 2009      Tim Cameron Ryan
+ * Copyright (c) 2009-2011 FlashCanvas Project
  * Licensed under the MIT License.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -22,9 +23,10 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  *
- * @author Colin (developed original ASCanvas)
- * @author Tim Cameron Ryan (developed haXe version)
+ * @author Colin Leung (developed ASCanvas)
+ * @author Tim Cameron Ryan
  * @author Shinya Muramatsu
+ * @see    http://code.google.com/p/ascanvas/
  */
 
 package com.googlecode.flashcanvas
@@ -36,7 +38,7 @@ package com.googlecode.flashcanvas
     public class State
     {
         public var transformMatrix:Matrix;
-        public var clipPath:Array;
+        public var clippingPath:Path;
         public var strokeStyle:Object;
         public var fillStyle:Object;
         public var globalAlpha:Number;
@@ -57,7 +59,7 @@ package com.googlecode.flashcanvas
         public function State()
         {
             transformMatrix          = new Matrix();
-            clipPath                 = [];
+            clippingPath             = new Path();
             strokeStyle              = new CSSColor("#000000");
             fillStyle                = new CSSColor("#000000");
             globalAlpha              = 1.0;
@@ -80,7 +82,7 @@ package com.googlecode.flashcanvas
         {
             var state:State = new State();
             state.transformMatrix          = transformMatrix.clone();
-            state.clipPath                 = clipPath;
+            state.clippingPath             = clippingPath.clone();
             state.strokeStyle              = strokeStyle;
             state.fillStyle                = fillStyle;
             state.globalAlpha              = globalAlpha;

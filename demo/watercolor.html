@@ -1,0 +1,246 @@
+<html><head>
+<meta http-equiv="content-type" content="text/html; charset=utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=8" />
+<script type="text/javascript" src="../jooscript.js"></script>
+<script type="text/javascript" src="../fxcanvas.js"></script>
+<!--[if IE]><script type="text/javascript" src="../flash_backend.js"></script><![endif]-->
+<comment><script type="text/javascript" src="../canvas_backend.js"></script></comment>
+<script type="text/javascript">
+
+function init() {
+  var rcols, imageData, randomized
+	var pressed = false;
+	var jitter = 2;
+	var size = 10;
+	var red = 0;
+	var green = 0;
+	var blue = 0;
+	var ca = document.getElementById("c");
+	ca.addEventListener("mousemove",mouseMoveHandler,false);
+	ca.addEventListener("mousedown",mouseDown,false);
+	ca.addEventListener("mouseup",mouseUp,false);
+	var context = ca.getContext("2d");
+  setInterval(function(){
+    draw()
+  },10);
+	//intv = window.setInterval("draw2()",30);
+  ca.oncanvasframe = draw2
+	context.lineWidth=0.2;
+	var a = new Array();
+
+  function changeSpeed(s) {
+    if(s > 0) {
+      ca.frameDuration = parseFloat(s)
+      //clearInterval(intv);
+      //intv = window.setInterval("draw2()",parseFloat(s));
+    }
+  }
+  function changeJitter(s) {
+    if(s >= 0) {
+      jitter = parseFloat(s);
+    }
+  }
+  function changeSize(s) {
+    if(s > 0) {
+      size = parseFloat(s);
+    }
+  }
+  function clearButton() {
+    context.clearRect(0,0,ca.width,ca.height);
+    a = [];
+  }
+  function saveCanvas() {
+    ca.toDataURL(function(imageData){
+      win = window.open(imageData,'','left=0,top=10,width=500,height=600,toolbar=0,location=0,resizable=0');
+    });
+  }
+  function randomize() {
+    document.getElementById("randombutton").disabled = true;
+    document.getElementById("definedbutton").disabled = false;
+    document.getElementById("colorsliders").style.visibility = "collapse";
+    rcols = document.getElementById("randomcolor");
+    rcols.style.visibility = "visible";
+    randomized = true;
+  }
+  function unrandomize() {
+    document.getElementById("randombutton").disabled = false;
+    document.getElementById("definedbutton").disabled = true;
+    document.getElementById("colorsliders").style.visibility = "visible";
+    rcols = document.getElementById("randomcolor");
+    rcols.style.visibility = "collapse";
+    randomized = false;
+    changeColor();
+  }
+  function changeRed(e) {
+    red = e;
+    changeColor();
+  }
+  function changeGreen(e) {
+    green = e;
+    changeColor();
+  }
+  function changeBlue(e) {
+    blue = e;
+    changeColor();
+  }
+  function changeColor() {
+    var dispbox = document.getElementById("colordisplay");
+    dispbox.style.background = "rgb("+red+","+green+","+blue+")";
+  }
+
+  function mouseMoveHandler(e) {
+    mouseX = offsetX + e.pageX;
+    mouseY = offsetY + e.pageY;
+  }
+  var offsetX=0, offsetY=0
+  function mouseDown(e) {
+    e.preventDefault();
+    pressed = true;
+    var el = e.target
+    getOffset(el)
+  }
+  function getOffset(el){
+    offsetX = 0
+    offsetY = 0
+    if (el.offsetParent) {
+      do {
+        offsetX -= el.offsetLeft
+        offsetY -= el.offsetTop
+      } while (el = el.offsetParent);
+    }
+    //trace(offsetX, offsetY)
+  }
+  function mouseUp() {
+    pressed = false;
+  }
+  getOffset(ca)
+
+  function draw() {
+    for(var i = 0;i<a.length;i++) {
+      a[i].update();
+      a[i].display();
+      if(a[i].isDead()) {
+        a.splice(i,1);
+      }
+    }
+  }
+  function draw2() {
+    if(pressed) {
+      if(randomized) {
+        blob = new boxSprite(mouseX,mouseY,jitter,size,Math.floor(255*Math.random()),Math.floor(255*Math.random()),Math.floor(255*Math.random()));
+      }
+      else {
+        blob = new boxSprite(mouseX,mouseY,jitter,size,red,green,blue);
+      }
+      a.push(blob);
+      blob.init();
+    }
+  }
+
+
+  function boxSprite(x,y,j,s,r,g,b) {
+    
+    this.init = function () {
+      this.x = x;
+      this.y = y;
+      this.jitter = j;
+      this.red = r;
+      this.green = g;
+      this.blue = b;
+      this.size = s;
+    }
+    this.display = function () {
+      context.strokeStyle = "rgb("+this.red+","+this.green+","+this.blue+")";
+      context.beginPath();
+      context.arc(this.x,this.y,this.size,0,6.28,0);
+      //trace("display", this.x)
+      context.closePath();
+      context.stroke();
+      //context.strokeRect(this.x-this.size/2,this.y-this.size/2,this.size,this.size);
+    }
+    this.update = function () {
+      this.size -= 0.01;
+      this.x += this.jitter*2*Math.random()-this.jitter;
+      this.y += this.jitter*2*Math.random()-this.jitter;
+    }
+    this.isDead = function () {
+      if(this.size < 0.1) {
+        return true;
+      }
+      else {
+        return false;
+      }
+    }
+  }
+
+  window.changeRed = changeRed
+  window.changeGreen = changeGreen
+  window.changeBlue = changeBlue
+  window.randomize = randomize
+  window.unrandomize = unrandomize
+  window.changeSize = changeSize
+  window.changeJitter = changeJitter
+  window.clearButton = clearButton
+  window.saveCanvas = saveCanvas
+
+  randomize();
+}
+</script>
+<style type="text/css">
+@media screen and (-webkit-min-device-pixel-ratio:0){
+	input.sub {display:none}
+	div#adinfo {display:none}
+}
+body {font-family:sans-serif}
+div.toolbar {width:200px;border:2px groove #CCCCCC;padding:5px;-webkit-box-shadow:1px 1px 10px gray;-moz-box-shadow:1px 1px 10px gray;background:#EEEEEE;margin:0px;position:relative;float:left;margin-left:10px;height:590px;margin-bottom:10px}
+div.item {border:2px groove #EEEEEE;padding:9px;width:80%;background:white}
+div#colordisplay {width:20px;height:20px;float:right;border:2px groove #EEEEEE}
+canvas {background:#F0FFFF;position:relative;float:left;cursor:pointer;margin-left:10px;border:2px groove #CCCCCC;-webkit-box-shadow:1px 1px 10px gray;-moz-box-shadow:1px 1px 10px gray}
+input#clearbutton {width:100%}
+input#savebutton {width:100%}
+div#randomcolor {position:relative;bottom:50px}
+</style>
+
+</head>
+
+<body onload="init();">
+<h1>Watercolors</h1>
+    <p>
+      Drag the mouse to draw. For best results, use Google Chrome or Safari, and reset your browser zoom to "Actual Size".
+    </p>
+<div class="toolbar">
+<div class="item">
+<div style="visibility: collapse;" id="colorsliders"><div id="colordisplay"></div><p style="font-size:.8em">color (RGB):</p><div id="adinfo"><p style="font-size:.6em">range is 0 - 255</p></div>
+<input name="red" min="0" max="255" step="1" value="0" onchange="changeRed(this.value);" type="range">
+<input name="green" min="0" max="255" step="1" value="0" onchange="changeGreen(this.value);" type="range">
+<input name="blue" min="0" max="255" step="1" value="0" onchange="changeBlue(this.value);" type="range">
+<input class="sub" name="ok" value="ok" type="submit">
+</div>
+<div style="visibility: visible;" id="randomcolor">
+Random colors
+</div>
+<input disabled="disabled" name="random" value="random" id="randombutton" onclick="randomize();" type="submit"><input name="defined" value="defined" id="definedbutton" onclick="unrandomize();" type="submit">
+</div>
+<div class="item">
+<p style="font-size:.8em">select brush delay (ms):</p>
+<input name="Jitter" min="1" max="100" step="5" value="30" onchange="changeSpeed(this.value);" type="range">
+<input class="sub" name="ok" value="ok" type="submit">
+</div>
+<div class="item">
+<p style="font-size:.8em">radius (px):</p>
+<input name="Size" min="1" max="20" step="1" value="10" onchange="changeSize(this.value);" type="range">
+<input class="sub" name="ok" value="ok" type="submit">
+</div>
+<div class="item">
+<p style="font-size:.8em">jitter amount:</p>
+<input name="Jitter" min="0" max="5" step="0.2" value="2" onchange="changeJitter(this.value);" type="range">
+<input class="sub" name="ok" value="ok" type="submit">
+</div>
+<div class="item">
+<input id="clearbutton" name="clear" value="clear" onclick="clearButton();" type="button">
+<input title="Image will open in browser, and can be saved from the contextual menu." id="savebutton" name="save" value="save" onclick="saveCanvas();" type="button">
+</div>
+<p style="font-size:.5em;position:absolute;bottom:0px">James N&#246;ckel 2010</p>
+</div>
+<canvas width="500" height="600" id="c" frameDuration="30">
+</canvas></body></html>

@@ -68,7 +68,7 @@ $(canvas_backend_js): $(canvas_backend)
 zip:
 	rm -rf "$(archives)/fxcanvas-$(Version)-$(Codename).zip"
 	zip -r "$(archives)/fxcanvas-$(Version)-$(Codename).zip" \
-		demo docs \
+		docs \
 		-i "*.js" "*.as" "*.swf" "*.jpg" "*.gif" "*.png" "*.htm?" "*.css" "*.php" README -x "demo/cakejs*"
 	zip -r "$(archives)/fxcanvas-$(Version)-$(Codename).zip" $(fxcanvas_swf) $(jooscript_js) $(fxcanvas_js) $(flash_backend_js) $(canvas_backend_js) ReadMe.html debug.php save.php view.php proxy.php
 

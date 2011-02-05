@@ -64,15 +64,21 @@ $Unit(__PATH__, __FILE__, function(unit, root, glob){
               dataHandler = args[args.length-1],
               backend = this.getBackend("2d");
 
-          var _type = type.toLowerCase();
-          switch (_type) {
-            case 'image/png':
-            case 'image/jpeg':
-            case 'image/svg+xml':
-              break;
-            default:
-              dataHandler("data:,");
-              return;
+          var _type
+          if(typeof type === "string") {
+            _type = type.toLowerCase();
+            switch (_type) {
+              case 'image/png':
+              case 'image/jpeg':
+              case 'image/svg+xml':
+                break;
+              default:
+                dataHandler("data:,");
+                return;
+            }
+          }
+          else {
+            _type = 'image/png'
           }
 
           backend._invoke(["toDataURL", _type, qual, dataHandler]);
@@ -447,7 +453,8 @@ $Unit(__PATH__, __FILE__, function(unit, root, glob){
       "arc": function (x, y, radius, startAngle, endAngle, anticlockwise) {
         if (radius < 0) unit.throwException("INDEX_SIZE_ERR")
         this._stack[this._stack.length] = [
-          com_arc, x, y, radius, startAngle, endAngle, anticlockwise ? "1" : "0", ""
+        com_arc, x, y, radius, startAngle, endAngle, 
+        anticlockwise || anticlockwise === undefined ? "1" : "0", ""
         ].join(argEnd)
       },
 
@@ -1288,6 +1295,8 @@ $Unit(__PATH__, __FILE__, function(unit, root, glob){
       var saveAsURL = unit.config.saveAsURL.substr(0, 4) === "http" ? 
                         unit.config.saveAsURL : unit.config.script_path + unit.config.saveAsURL;
 
+      var host_addr = location.protocol + "//" + location.hostname;
+      if( location.port ) host_addr += ":" + location.port
       //trace("initFlash", canvasID, frameDuration, [width, height], cur_st && cur_st.width, cur_st && cur_st.height)
 
       var initVars = [
@@ -1298,7 +1307,7 @@ $Unit(__PATH__, __FILE__, function(unit, root, glob){
             frameDuration,
             canvasID, 
             unit.pageUUID,
-            escapeArgString(location.protocol + "//" + location.hostname), 
+            escapeArgString(host_addr), 
             escapeArgString(viewImageURL), 
             escapeArgString(saveAsURL),
             escapeArgString(unit.config.imageProxy) 
@@ -1355,6 +1364,9 @@ $Unit(__PATH__, __FILE__, function(unit, root, glob){
         },
         "about" : function () {
           window.location = unit.config.projectURL;
+        },
+        "about_flash" : function () {
+          window.location = "http://www.adobe.com";
         }
       };
 
