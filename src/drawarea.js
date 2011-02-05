@@ -49,6 +49,12 @@ $Unit(__PATH__, __FILE__, function(unit)
             knot += 1
             knots = 0
             path[knot] = [cmd, []]
+            if( cmd == "arc" ) {
+                var clockwise = document.getElementById("clockwise").checked
+                path[knot][1].clockwise = clockwise
+                path[knot][1].startAngle = 0
+                path[knot][1].endAngle = 360*(Math.PI/180)
+            }
         }
         //if (!path[knot] || knots > cmd_args - 1) {
         //}
@@ -171,7 +177,7 @@ $Unit(__PATH__, __FILE__, function(unit)
                         if (l == 6) st = pink
                     default:
                 }
-                if( c == "arc" && l == 4) {
+                if( c == "arc" && l == 4 ) {
                     var x = a[0],
                         y = a[1],
                         rx = a[2],
